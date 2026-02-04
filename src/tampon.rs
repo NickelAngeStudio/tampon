@@ -1,33 +1,31 @@
-/*
- * @file tampon/tampon.rs
- *
- * @module tampon
- *
- * @brief Contain Tampon trait used in macros.
- * 
- * @details
- * Contain Tampon trait used in macros.
- *
- * @author Mathieu Grenier
- * @copyright NickelAnge.Studio
- *
- * @date 2022-07-02
- *
- * @version
- * 1.0 : 2022-07-02 | Mathieu Grenier | Code creation
- *
- * @ref
- * 
- * @todo
- * 
- */
+/* 
+Copyright (c) 2026  NickelAnge.Studio 
+Email               mathieu.grenier@nickelange.studio
+Git                 https://github.com/NickelAngeStudio/tampon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 /// ##### Trait used to [`serialize / deserialize`](https://en.wikipedia.org/wiki/Serialization) object.
 /// This trait must be implemented by object that needs to be [`serialize / deserialize`](https://en.wikipedia.org/wiki/Serialization).
 /// 
 /// Functions can easily be implemented using macros of the same name (see example below).
-/// 
-/// <b>When implementing `Tampon<T>`, `T` should be the object that implement the trait Tampon.</b>
 /// 
 /// # Example(s)
 /// ```
@@ -44,7 +42,7 @@
 /// }
 /// 
 /// // Implement Tampon for struct
-/// impl Tampon<TamponExample> for TamponExample {
+/// impl Tampon for TamponExample {
 ///     fn bytes_size(&self) -> usize {
 ///         // Use bytes_size! macro to easily return the size in bytes
 ///         bytes_size!((self.f1):u8, (self.f1):u32, (self.f3):f64, [self.v1]:u8, [self.v2]:f64)
@@ -64,7 +62,7 @@
 ///     }
 /// }
 /// ```
-pub trait Tampon<T> {
+pub trait Tampon {
     /// Size of the trait implementation in [`bytes`](https://en.wikipedia.org/wiki/Byte).
     /// 
     /// Use macro [`bytes_size!`] to easily return the size in bytes.
@@ -112,5 +110,5 @@ pub trait Tampon<T> {
     /// 
     /// # Return
     /// Tuple of new object and bytes read from buffer.
-    fn deserialize(buffer : &[u8]) -> (T, usize);
+    fn deserialize(buffer : &[u8]) -> (Self, usize) where Self: Sized;
 }

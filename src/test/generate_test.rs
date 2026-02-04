@@ -1,25 +1,26 @@
-/*
- * @file tampon/test/generate_test.rs
- *
- * @module tampon::test
- *
- * @brief Contains tests for generate_buffer function.
- * 
- * @details
- * Contains tests for generate_buffer function.
- *
- * @author Mathieu Grenier
- * @copyright NickelAnge.Studio
- *
- * @date 2022-07-01
- *
- * @version
- * 1.0 : 2022-07-01 | Mathieu Grenier | Code creation
- *
- * @ref
- * 
- * @todo
- */
+/* 
+Copyright (c) 2026  NickelAnge.Studio 
+Email               mathieu.grenier@nickelange.studio
+Git                 https://github.com/NickelAngeStudio/tampon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 use std::time::{Duration, Instant};
 use rand::{Rng, prelude::ThreadRng};
@@ -43,7 +44,7 @@ static STRESS_MAX_SIZE : usize = 4*1024*1024;
 // Generate a buffer with size 0
 fn generate_buffer_size_0(){
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let buffer = crate::generate_buffer(&mut rng, 0, buffer_generator_charset::ALL);
 
@@ -56,7 +57,7 @@ fn generate_buffer_size_0(){
 // Generate a buffer without charset
 fn generate_buffer_no_charset(){
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     let buffer = crate::generate_buffer(&mut rng, BUFFER_SIZE, 0);
 
@@ -68,7 +69,7 @@ fn generate_buffer_no_charset(){
 // Generate a buffer with each charset and test set validity
 fn generate_and_test_characters_set(){
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
 
     test_character_set_validity(&mut rng, buffer_generator_charset::NUMBER, BUFFER_SIZE, true);
     test_character_set_validity(&mut rng,buffer_generator_charset::LOWER_CASE, BUFFER_SIZE, true);
@@ -85,7 +86,7 @@ fn generate_and_test_characters_set(){
 // Stress test buffer for STRESS_DURATION. Can take long time.
 fn generate_buffer_stress_test() {
 
-    let mut rng = rand::thread_rng();
+    let mut rng = rand::rng();
     let mut stress_loop = 0;
     let started = Instant::now();
 
@@ -93,7 +94,7 @@ fn generate_buffer_stress_test() {
         stress_loop += 1;
 
         // Generate buffer size
-        let size = rng.gen_range(0..=STRESS_MAX_SIZE);
+        let size = rng.random_range(0..=STRESS_MAX_SIZE);
         
         // Generate buffer charset
         let charset = generate_charset(&mut rng);
@@ -121,14 +122,14 @@ fn generate_charset(rng : &mut ThreadRng) -> u8{
     while charset == 0 {
 
         // Pick numbers for charset generation 
-        let number = rng.gen_range(0..=1);
-        let lower_case = rng.gen_range(0..=1);
-        let upper_case = rng.gen_range(0..=1);
-        let symbol = rng.gen_range(0..=1);
-        let unreadable = rng.gen_range(0..=1);
+        let number = rng.random_range(0..=1);
+        let lower_case = rng.random_range(0..=1);
+        let upper_case = rng.random_range(0..=1);
+        let symbol = rng.random_range(0..=1);
+        let unreadable = rng.random_range(0..=1);
 
         // Lower chance to get all (1 out of 10)
-        let all = rng.gen_range(0..=10);
+        let all = rng.random_range(0..=10);
 
         if number == 1 {
             charset = charset | buffer_generator_charset::NUMBER;

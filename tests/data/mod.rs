@@ -1,26 +1,26 @@
-/*
- * @file tampon/tests/datatest.rs
- *
- * @module tampon::tests
- *
- * @brief Contains struct of datas used for tests.
- * 
- * @details
- * Contains struct of datas used for tests.
- * 
- *
- * @author Mathieu Grenier
- * @copyright NickelAnge.Studio
- *
- * @date 2022-07-04
- *
- * @version
- * 1.0 : 2022-07-04 | Mathieu Grenier | Code creation
- *
- * @ref
- * 
- * @todo
- */
+/* 
+Copyright (c) 2026  NickelAnge.Studio 
+Email               mathieu.grenier@nickelange.studio
+Git                 https://github.com/NickelAngeStudio/tampon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 use crate::implementation::{ TamponS1, TamponS2 } ;
 
@@ -62,14 +62,14 @@ macro_rules! boolean_slice {
         for i in 0..($index + 1) * 100{
             $name.push(i % 2 == 0);
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES + $name.len();
+        $size += size_of::<u32>() + $name.len();
     };
     ($size:expr, $index:expr, $name:ident, $($tail:tt)*) => {
         let mut $name:Vec<bool> = Vec::new();
         for i in 0..($index + 1) * 100{
             $name.push(i % 2 == 0);
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES + $name.len();
+        $size += size_of::<u32>() + $name.len();
         boolean_slice!($size, $index + 1, $($tail)*);
     };
 }
@@ -95,11 +95,11 @@ macro_rules! numeric_var {
 macro_rules! numeric_slice {
     ($size:expr, $index:expr, $name:ident:$type:ty) => {
         let $name:Vec<$type> = vec![<$type>::MAX; ($index + 1) * 100];
-        $size += tampon::SLICE_SIZE_IN_BYTES + core::mem::size_of::<$type>() *  ($index + 1) * 100;
+        $size += size_of::<u32>() + core::mem::size_of::<$type>() *  ($index + 1) * 100;
     };
     ($size:expr, $index:expr, $name:ident:$type:ty, $($tail:tt)*) => {
         let $name:Vec<$type> = vec![<$type>::MAX;   ($index + 1) * 100];
-        $size += tampon::SLICE_SIZE_IN_BYTES + core::mem::size_of::<$type>() *  ($index + 1) * 100;
+        $size += size_of::<u32>() + core::mem::size_of::<$type>() *  ($index + 1) * 100;
         numeric_slice!($size, $index + 1, $($tail)*);
     };
 }
@@ -110,11 +110,11 @@ macro_rules! numeric_slice {
 macro_rules! string_var {
     ($size:expr, $strings:expr, $index:expr, $name:ident) => {
         let $name:String = String::from($strings[$index]);
-        $size += tampon::SLICE_SIZE_IN_BYTES+$name.len();
+        $size += size_of::<u32>()+$name.len();
     };
     ($size:expr, $strings:expr, $index:expr, $name:ident, $($tail:tt)*) => {
         let $name:String = String::from($strings[$index]);
-        $size += tampon::SLICE_SIZE_IN_BYTES+$name.len();
+        $size += size_of::<u32>()+$name.len();
         string_var!($size, $strings, $index + 1, $($tail)*);
     };
 }
@@ -126,17 +126,17 @@ macro_rules! string_slice {
         let mut $name:Vec<String> = Vec::new();
         for elem in $strings {
             $name.push(String::from(*elem));
-            $size += tampon::SLICE_SIZE_IN_BYTES+elem.len();
+            $size += size_of::<u32>()+elem.len();
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES;
+        $size += size_of::<u32>();
     };
     ($size:expr, $strings:expr, $index:expr, $name:ident, $($tail:tt)*) => {
         let mut $name:Vec<String> = Vec::new();
         for elem in $strings {
             $name.push(String::from(*elem));
-            $size += tampon::SLICE_SIZE_IN_BYTES+elem.len();
+            $size += size_of::<u32>()+elem.len();
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES;
+        $size += size_of::<u32>();
 
         string_slice!($size, $strings, $index + 1, $($tail)*);
     };
@@ -177,7 +177,7 @@ macro_rules! tampon_slice {
             $size += t.bytes_size();
             $name.push(t);
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES;
+        $size += size_of::<u32>();
     };
     ($size:expr, $index:expr, $name:ident:TamponS1, $($tail:tt)*) => {
         let mut $name:Vec<TamponS1> = Vec::new();
@@ -186,7 +186,7 @@ macro_rules! tampon_slice {
             $size += t.bytes_size();
             $name.push(t);
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES;
+        $size += size_of::<u32>();
         tampon_slice!($size, $index + 1, $($tail)*);
     };
 
@@ -197,7 +197,7 @@ macro_rules! tampon_slice {
             $size += t.bytes_size();
             $name.push(t);
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES;
+        $size += size_of::<u32>();
     };
     ($size:expr, $index:expr, $name:ident:TamponS2, $($tail:tt)*) => {
         let mut $name:Vec<TamponS2> = Vec::new();
@@ -206,7 +206,7 @@ macro_rules! tampon_slice {
             $size += t.bytes_size();
             $name.push(t);
         }
-        $size += tampon::SLICE_SIZE_IN_BYTES;
+        $size += size_of::<u32>();
         tampon_slice!($size, $index + 1, $($tail)*);
     };
 }

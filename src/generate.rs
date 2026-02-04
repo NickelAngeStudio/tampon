@@ -1,25 +1,26 @@
-/*
- * @file tampon/generate.rs
- *
- * @module tampon
- *
- * @brief Contain function and parameters to generate a buffer.
- * 
- * @details
- * Contain function and parameters to generate a buffer.
- *
- * @author Mathieu Grenier
- * @copyright NickelAnge.Studio
- *
- * @date 2022-07-01 - Happy Canada Day
- *
- * @version
- * 1.0 : 2022-07-01 | Mathieu Grenier | Code creation
- *
- * @ref
- * 
- * @todo
- */
+/* 
+Copyright (c) 2026  NickelAnge.Studio 
+Email               mathieu.grenier@nickelange.studio
+Git                 https://github.com/NickelAngeStudio/tampon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 /// ##### Generate a random [`u8`] buffer with specific size and [`charset`](buffer_generator_charset/index.html).
 /// 
@@ -72,7 +73,7 @@ pub fn generate_buffer(rng : &mut impl rand::Rng, size : usize, charset: u8) -> 
     // Fill buffer with character sets
     for i in 0..size {
         // Fill buffer with character from sample range
-        buffer[i] = charset_range[rng.gen_range(0..charset_range.len())];
+        buffer[i] = charset_range[rng.random_range(0..charset_range.len())];
     }
     
     // Return generated buffer
