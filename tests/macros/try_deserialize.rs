@@ -1,6 +1,3 @@
-#![doc(html_playground_url = "https://play.rust-lang.org/")]
-#![doc(html_logo_url = "https://avatars.githubusercontent.com/u/67743099?v=4")]
-
 /* 
 Copyright (c) 2026  NickelAnge.Studio 
 Email               mathieu.grenier@nickelange.studio
@@ -24,47 +21,3 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
-
- /// # Re-export for Public API
- #[doc(inline)]
- pub use generate::generate_buffer as generate_buffer;
- pub use generate::buffer_generator_charset as buffer_generator_charset;
- pub use wipe::wipe_buffer as wipe_buffer;
- pub use compare::compare_buffers as compare_buffers;
- pub use crate::tampon::Tampon as Tampon;
-
-/// Generate buffer
-#[doc(hidden)]
-pub mod generate;
-
-/// Wipe buffer
-#[doc(hidden)]
-pub mod wipe;
-
-/// Compare buffers
-#[doc(hidden)]
-pub mod compare;
-
-/// Tampon trait
-#[doc(hidden)]
-pub mod tampon;
-
-/// bytes_size macro
-#[doc(hidden)]
-pub mod serialize_size;
-
-/// serialize macro
-#[doc(hidden)]
-pub mod serialize;
-
-/// deserialize macro
-#[doc(hidden)]
-pub mod deserialize;
-
-/// buffer! macro
-#[doc(hidden)]
-pub mod buffer;
-
-// Tests module folder
-#[cfg(test)]
-mod test;

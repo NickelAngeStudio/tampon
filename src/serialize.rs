@@ -1,25 +1,27 @@
-/*
- * @file tampon/serialize.rs
- *
- * @module tampon
- *
- * @brief Macro used to easily fill a buffer from primitive, vectors and Tampon trait implementation.
- * 
- * @details
- * Macro used to easily fill a buffer from primitive, vectors and Tampon trait implementation.
- *
- * @author Mathieu Grenier
- * @copyright NickelAnge.Studio
- *
- * @date 2022-07-04
- *
- * @version
- * 1.0 : 2022-07-04 | Mathieu Grenier | Code creation
- *
- * @ref
- * 
- * @todo
- */
+/* 
+Copyright (c) 2026  NickelAnge.Studio 
+Email               mathieu.grenier@nickelange.studio
+Git                 https://github.com/NickelAngeStudio/tampon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
+
 
 /// ##### Variadic macro used to [`serialize`](https://en.wikipedia.org/wiki/Serialization) [`compatible variables`](macro.serialize.html#compatible-variabless) into a [`buffer`](https://en.wikipedia.org/wiki/Data_buffer). 
 /// 
@@ -28,11 +30,12 @@
 /// Also work with [`slice`] by using brackets `[]` instead of parenthesis `()`.
 /// 
 /// # Usage
-/// `serialize!(buffer, [bytes_copied,] [0..n](v1, ..., vn):type, [0..n][s1, ..., sn]:type);`
+/// `serialize!(buffer, [bytes_copied,] [0..n](v1, ..., vn):type, [0..n][optional_len_type : s1, ..., sn]:type);`
 /// * `buffer` - Mutable reference to [`slice`] of [`u8`] to copy bytes into.
 /// * `bytes_copied` - (Optional) Identifier here can be used to get the count of bytes copied into buffer.
 /// * One-to-many `(v1, ..., vn):type` where elements in `parenthesis()` are the variables to be copied into buffer.
 /// * One-to-many `[s1, ..., sn]:type` where elements in `brackets[]` are the slices to be copied into buffer.
+///      * `optional_len_type` u8, u16, u32 default, u64 or u128 for the size of bytes used to encode length.
 /// 
 /// # Example(s)
 /// ```
@@ -100,280 +103,127 @@
 /// * Will panic! if `buffer` length is smaller than all sources length combined.
 #[macro_export]
 macro_rules! serialize {
-    
-    // Expression without tail without bytes_read
-    ($buffer:expr,($expr:expr $(,$extra:expr)*):$type:ident) => { {
-        let mut temporary_bytes_written = $crate::serialize_parser!($buffer, 0, ($expr $(,$extra)*):$type);
-    }};
-
-    // Expression with tail without bytes_read
-    ($buffer:expr, ($expr:expr $(,$extra:expr)*):$type:ident, $($tail:tt)*) => {{
-        let mut temporary_bytes_written = $crate::serialize_parser!($buffer, 0, ($expr $(,$extra)*):$type, $($tail)*);
-    }};
-
-    // Expression without tail with bytes_written
-    ($buffer:expr, $bytes_written:ident, ($expr:expr $(,$extra:expr)*):$type:ident) => {
-        // Dispatch to parser and get bytes_written
-        let mut $bytes_written = $crate::serialize_parser!($buffer, 0, ($expr $(,$extra)*):$type);
+    ($buffer:expr, $($tokens:tt : $tokens_type:ident),+ ) => { // No optional parameter
+        let mut temp_bytes_written = 0;
+        $crate::serialize!{ $buffer, temp_bytes_written, $( $tokens : $tokens_type ),+ };
     };
-
-    // Expression with tail with bytes_written
-    ($buffer:expr, $bytes_written:ident, ($expr:expr $(,$extra:expr)*):$type:ident, $($tail:tt)*) => {
-        // Dispatch to parser and get bytes_written
-        let mut $bytes_written = $crate::serialize_parser!($buffer, 0, ($expr $(,$extra)*):$type, $($tail)*);
+    ($buffer:expr, $bytes_written : ident, $( $tokens:tt : $tokens_type:ident ),+ ) => { // With optional parameter
+        let mut $bytes_written = 0;
+        $(
+            $crate::serialize_parser! ( $buffer[$bytes_written..], $bytes_written, $tokens : $tokens_type);
+        )+
     };
-
-
-    // Slice without tail without bytes_read
-    ($buffer:expr, [$expr:expr $(,$extra:expr)*]:$type:ident) => { {
-        let mut temporary_bytes_written = $crate::serialize_parser!($buffer, 0, [$expr $(,$extra)*]:$type);
-    }};
-
-    // Slice with tail without bytes_read
-    ($buffer:expr, [$expr:expr $(,$extra:expr)*]:$type:ident, $($tail:tt)*) => {{
-        let mut temporary_bytes_written = $crate::serialize_parser!($buffer, 0, [$expr $(,$extra)*]:$type, $($tail)*);
-    }};
-
-    // Slice without tail with bytes_written
-    ($buffer:expr, $bytes_written:ident, [$expr:expr $(,$extra:expr)*]:$type:ident) => {
-        // Dispatch to parser and get bytes_written
-        let mut $bytes_written = $crate::serialize_parser!($buffer, 0, [$expr $(,$extra)*]:$type);
-    };
-
-    // Slice with tail with bytes_written
-    ($buffer:expr, $bytes_written:ident, [$expr:expr $(,$extra:expr)*]:$type:ident, $($tail:tt)*) => {
-        // Dispatch to parser and get bytes_written
-        let mut $bytes_written = $crate::serialize_parser!($buffer, 0, [$expr $(,$extra)*]:$type, $($tail)*);
-    };
-
-
 }
 
 /// Hidden extension of the serialize! macro. Not meant to be used directly (although it will still work).
 #[doc(hidden)]
 #[macro_export]
 macro_rules! serialize_parser {
-    // Macro built with Incremental TT munchers pattern : https://danielkeep.github.io/tlborm/book/pat-incremental-tt-munchers.html
-
-    // Expression without tail
-    ($buffer:expr, $index:expr, ($expr:expr $(,$extra:expr)*):$type:ident) => {{
-        let buffer_size = $buffer.len();
-        // Init bytes_copied with the expression
-        let mut bytes_copied = $crate::serialize_retriever!($buffer[$index..buffer_size], $expr => $type);
-        // Write extra to buffer and accumulate size
-        $(bytes_copied += $crate::serialize_retriever!($buffer[$index + bytes_copied..buffer_size], $extra => $type); )*
-
-        // Return bytes_copied
-        bytes_copied
-    } as usize };
-
-    // Expression with tail
-    ($buffer:expr, $index:expr, ($expr:expr $(,$extra:expr)*):$type:ident, $($tail:tt)*) => {{
-        let buffer_size = $buffer.len();
-        // Init bytes_copied with the expression
-        let mut bytes_copied = $crate::serialize_retriever!($buffer[$index..buffer_size], $expr => $type);
-
-        // Write extra to buffer and accumulate bytes_copied
-        $(bytes_copied += $crate::serialize_retriever!($buffer[$index + bytes_copied..buffer_size], $extra => $type); )*
-
-        // Write and accumulate tail TT
-        bytes_copied += $crate::serialize_parser!($buffer, $index + bytes_copied, $($tail)*);
-
-        // Return bytes_copied
-        bytes_copied
-    } as usize };
-
-    // Slice without tail
-    ($buffer:expr, $index:expr, [$expr:expr $(,$extra:expr)*]:$type:ident) => {{
-        let buffer_size = $buffer.len();
-        let mut bytes_copied = 0;
-
-        // Get value from buffer into array
-        bytes_copied += $crate::serialize_retriever!($buffer[$index + bytes_copied..buffer_size], $expr => [$type]);
-        // Get value from buffer into array for extra
-        $( bytes_copied += $crate::serialize_retriever!($buffer[$index + bytes_copied..buffer_size], $extra => [$type]); )*
-
-        // Return bytes copied
-        bytes_copied
-
-    } as usize };
-
-    // Slice with tail
-    ($buffer:expr, $index:expr, [$expr:expr $(,$extra:expr)*]:$type:ident, $($tail:tt)*) => {{
-        let buffer_size = $buffer.len();
-        let mut bytes_copied = 0;
-
-        // Get value from buffer into array
-        bytes_copied += $crate::serialize_retriever!($buffer[$index + bytes_copied..buffer_size], $expr => [$type]);
-
-        // Get value from buffer into array for extra
-        $( bytes_copied += $crate::serialize_retriever!($buffer[$index + bytes_copied..buffer_size], $extra => [$type]); )*
-        // Parse tail
-        bytes_copied += $crate::serialize_parser!($buffer, $index + bytes_copied, $($tail)*);
-
-        // Return bytes copied
-        bytes_copied
-
-    } as usize };
-
-}
+    ($buffer:expr, $bytes_written : ident, ($($name:expr),+ ) : $tok_type : ident) => {  // Simple
+        $(
+            $crate::serialize_parser!(@PARSE $bytes_written, $buffer, $name => $tok_type);
+        )+
 
 
-/// Hidden extension of the serialize! macro. Parse tokens. Not meant to be used directly (although it will still work).
-#[doc(hidden)]
-#[macro_export]
-macro_rules! serialize_retriever {
+    };
+    ($buffer:expr, $bytes_written : ident, [$($name:expr),+ ] : $tok_type : ident) => {  // Vector
+         $(
+            $crate::serialize_parser!(@PARSE $bytes_written, $buffer, $name => [u32, $tok_type]);
+        )+
+    };
+    ($buffer:expr, $bytes_written : ident, [$len_type:ty : $($name:expr),+ ] : $tok_type : ident) => {  // Vector with length type
+         $(
+            $crate::serialize_parser!(@PARSE $bytes_written, $buffer, $name => [$len_type:ty, $tok_type]);
+        )+
+    };
 
-    // Slice affectator
-    ($buffer:expr, $expr:expr => [$type:ident]) => {{
-        let buffer_size = $buffer.len();
 
-        // Write size of slice
-        let bytes_len = ($expr.len() as u32).to_le_bytes();
+    // Slice affectator with len type
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => [$len_type:ty, $type:ident]) => {
+
+        // Write size of slice according to $len_type
+        let bytes_len = ($name.len() as $len_type).to_le_bytes();
         $buffer[0..bytes_len.len()].copy_from_slice(&bytes_len);
 
         // Init bytes_copied at bytes_len.len() since we will loop slice
-        let mut bytes_copied = bytes_len.len();
+        $bytes_written += bytes_len.len();
 
-        // Loop and accumulate and element of slice
-        for elem in $expr.iter() {
-            bytes_copied += $crate::serialize_retriever!($buffer[bytes_copied..buffer_size], *elem => $type);
+    
+        // Loop and accumulate element of slice
+        for elem in $name.iter() {
+            $crate::serialize_parser!(@PARSE $bytes_written, $buffer[0..], *elem => $type);
         } 
 
-        // Return bytes_copied
-        bytes_copied
-
-    } as usize} ;
+    };
 
 
     /**********
     * BOOLEAN *
     **********/
-    ($buffer:expr, $expr:expr => bool) => {{ 
-        // Translate bytes into u8
-        if($expr) {
-            $crate::serialize_retriever!($buffer, 1 => u8)
-        } else {
-            $crate::serialize_retriever!($buffer, 0 => u8)
-        }
-        
-    } as usize };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => bool) => {
+        $bytes_written += {
+        if($name) {
+                //$crate::serialize_retriever!($buffer, 1 => u8)
+                let bytes = (1 as u8).to_le_bytes();
+                $buffer[0..bytes.len()].copy_from_slice(&bytes);
+                bytes.len()
+            } else {
+                let bytes = (0 as u8).to_le_bytes();
+                $buffer[0..bytes.len()].copy_from_slice(&bytes);
+                bytes.len()
+            }
+        };
+    };
 
 
     /***********
     * NUMERICS * 
     ***********/
-    ($buffer:expr, $expr:expr => u8) => {{ 
+    (@NUM $bytes_written:expr, $buffer:expr, $name:expr, $type:ty) => {
         // Transform the expression into bytes
-        let bytes = <u8>::to_le_bytes($expr);
+        let bytes = <$type>::to_le_bytes($name);
 
         // Copy to buffer via copy from slice
         $buffer[0..bytes.len()].copy_from_slice(&bytes);
 
         // Return size used
-        bytes.len()
-    } as usize };
+        $bytes_written += bytes.len()
+    };
 
-
-    ($buffer:expr, $expr:expr => u16) => {{ 
-        let bytes = <u16>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => u32) => {{ 
-        let bytes = <u32>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => u64) => {{ 
-        let bytes = <u64>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => u128) => {{ 
-        let bytes = <u128>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => f32) => {{ 
-        let bytes = <f32>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-    ($buffer:expr, $expr:expr => f64) => {{ 
-        let bytes = <f64>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => i8) => {{ 
-        let bytes = <i8>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => i16) => {{ 
-        let bytes = <i16>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => i32) => {{ 
-        let bytes = <i32>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => i64) => {{ 
-        let bytes = <i64>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
-
-
-    ($buffer:expr, $expr:expr => i128) => {{ 
-        let bytes = <i128>::to_le_bytes($expr);
-        $buffer[0..bytes.len()].copy_from_slice(&bytes);
-        bytes.len()
-    } as usize };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => u8) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, u8 ); };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => u16) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, u16 ); };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => u32) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, u32 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => u64) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, u64 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => u128) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, u128 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => f32) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, f32 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => f64) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, f64 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => i8) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, i8 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => i16) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, i16 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => i32) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, i32 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => i64) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, i64 ) };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => i128) => { $crate::serialize_parser! (@NUM $bytes_written, $buffer, $name, i128 ) };
 
     /*********
     * STRING * 
     *********/
-    ($buffer:expr, $expr:expr => String) => {{ 
-        
-        // Write size of String
-        let bytes_size = ($expr.len() as u32).to_le_bytes();
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => String) => {
+         // Write size of String
+        let bytes_size = ($name.len() as u32).to_le_bytes();
         $buffer[0..bytes_size.len()].copy_from_slice(&bytes_size);
-
         // Transform String as bytes slice
-        let bytes = $expr.as_bytes();
-
+        let bytes = $name.as_bytes();
         // Copy to buffer via copy from slice
         $buffer[bytes_size.len()..(bytes_size.len() + bytes.len())].copy_from_slice(&bytes);
-
         // Return size used
-        bytes_size.len() + bytes.len()
-
-    } as usize };
+        $bytes_written += bytes_size.len() + bytes.len()
+       
+    };
 
     /***************
     * TAMPON TRAIT * 
     ***************/
-    ($buffer:expr, $expr:expr => $tampon:ident) => {{
-        $expr.serialize(&mut $buffer)
-    } as usize };
+    (@PARSE $bytes_written:expr, $buffer:expr, $name:expr => $tampon:ident) => {
+        $bytes_written += $name.serialize(&mut $buffer);
+    };
+
 }

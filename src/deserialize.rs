@@ -1,25 +1,26 @@
-/*
- * @file tampon/deserialize.rs
- *
- * @module tampon
- *
- * @brief Macro used to easily retrieve values from buffer to primitive, vectors and Tampon trait implementation.
- * 
- * @details
- * Macro used to easily retrieve values from buffer to primitive, vectors and Tampon trait implementation.
- *
- * @author Mathieu Grenier
- * @copyright NickelAnge.Studio
- *
- * @date 2022-07-13
- *
- * @version
- * 1.0 : 2022-07-13 | Mathieu Grenier | Code creation
- *
- * @ref
- * 
- * @todo
- */
+/* 
+Copyright (c) 2026  NickelAnge.Studio 
+Email               mathieu.grenier@nickelange.studio
+Git                 https://github.com/NickelAngeStudio/tampon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 /// ##### Variadic macro used to [`deserialize`](https://en.wikipedia.org/wiki/Serialization) [`compatible variables`](macro.deserialize.html#compatible-variabless) from a [`buffer`](https://en.wikipedia.org/wiki/Data_buffer). 
 /// 
@@ -29,11 +30,12 @@
 /// 
 /// <b>deserialize! automatically creates variables when retrieving data.</b>
 /// # Usage
-/// `deserialize!(buffer, [bytes_read,] [0..n](v1, ..., vn):type, [0..n][s1, ..., sn]:type);`
+/// `deserialize!(buffer, [bytes_read,] [0..n](v1, ..., vn):type, [0..n][optional_len_type :  s1, ..., sn]:type);`
 /// * `buffer` - Unmutable reference to [`slice`] of [`u8`] to copy bytes from.
 /// * `bytes_read` - (Optional) Identifier here can be used to get the count of bytes read from buffer.
 /// * One-to-many `(v1, ..., vn):type` where elements in `parenthesis()` are the variables to be read from buffer.
-/// * One-to-many `[s1, ..., sn]:type` where elements in `brackets[]` are the slices to be read from buffer.
+/// * One-to-many `[optional_len_type : s1, ..., sn]:type` where elements in `brackets[]` are the slices to be read from buffer.
+///     * `optional_len_type` u8, u16, u32 default, u64 or u128 for the size of bytes used to encode length. 
 /// 
 /// # Example(s)
 /// ```
@@ -75,131 +77,51 @@
 /// * Will panic! if `buffer` length is smaller than all target length combined.
 #[macro_export]
 macro_rules! deserialize {
-    /************
-    * VARIABLES * 
-    ************/
-     // Expression without tail without bytes_read
-     ($buffer:expr, ($name:ident $(,$extra:ident)*):$type:ident) => {
-        let mut temporary_bytes_read = 0;
-        $crate::deserialize_parser!($buffer, 0, temporary_bytes_read, ($name $(,$extra)*):$type);
+    ($buffer:expr, $($tokens:tt : $tokens_type:ident),+ ) => { // No optional parameter
+        let mut temp_bytes_read = 0;
+        $crate::deserialize!{ $buffer, temp_bytes_read, $( $tokens : $tokens_type ),+ };
     };
-
-    // Expression with tail without bytes_read
-    ($buffer:expr, ($name:ident $(,$extra:ident)*):$type:ident, $($tail:tt)*) => {
-        let mut temporary_bytes_read = 0;
-        $crate::deserialize_parser!($buffer, 0, temporary_bytes_read, ($name $(,$extra)*):$type, $($tail)*);
-    };
-
-    // Expression without tail with bytes_read
-    ($buffer:expr, $bytes_read:ident, ($name:ident $(,$extra:ident)*):$type:ident) => {
-        // Initialize bytes_read token
+    ($buffer:expr, $bytes_read : ident, $( $tokens:tt : $tokens_type:ident ),+ ) => { // With optional parameter
         let mut $bytes_read = 0;
-        // Send to deserialize_parser
-        $crate::deserialize_parser!($buffer, 0, $bytes_read, ($name $(,$extra)*):$type);
+        $(
+            $crate::deserialize_parser! ( $buffer[$bytes_read..], $bytes_read, $tokens : $tokens_type);
+        )+
     };
-    
-    // Expression with tail with bytes_read
-    ($buffer:expr, $bytes_read:ident, ($name:ident $(,$extra:ident)*):$type:ident, $($tail:tt)*) => {
-        // Initialize bytes_read token
-        let mut $bytes_read = 0;
-        // Send to deserialize_parser
-        $crate::deserialize_parser!($buffer, 0, $bytes_read, ($name $(,$extra)*):$type, $($tail)*);
-    };
-
-
-    /*********
-    * SLICES * 
-    *********/
-    // SLICE Without tail without bytes_read
-    ($buffer:expr, [$name:ident $(,$extra:ident)*]:$type:ident) => {
-        let mut temporary_bytes_read = 0;
-        $crate::deserialize_parser!($buffer, 0, temporary_bytes_read, [$name $(,$extra)*]:$type);
-    };
-
-    // SLICE With tail without bytes_read
-    ($buffer:expr, [$name:ident $(,$extra:ident)*]:$type:ident, $($tail:tt)*) => {
-        let mut temporary_bytes_read = 0;
-        $crate::deserialize_parser!($buffer, 0, temporary_bytes_read, [$name $(,$extra)*]:$type, $($tail)*);
-    };
-
-    // SLICE Without tail with bytes_read
-    ($buffer:expr, $bytes_read:ident, [$name:ident $(,$extra:ident)*]:$type:ident) => {
-        // Initialize bytes_read token
-        let mut $bytes_read = 0;
-        // Send to deserialize_parser
-        $crate::deserialize_parser!($buffer, 0, $bytes_read, [$name $(,$extra)*]:$type);
-    };
-
-    // SLICE With tail with bytes_read
-    ($buffer:expr, $bytes_read:ident, [$name:ident $(,$extra:ident)*]:$type:ident, $($tail:tt)*) => {
-        // Initialize bytes_read token
-        let mut $bytes_read = 0;
-        // Send to deserialize_parser
-        $crate::deserialize_parser!($buffer, 0, $bytes_read, [$name $(,$extra)*]:$type, $($tail)*);
-    };
-    
 }
 
 /// Hidden extension of the to_buffer! macro. Parse tokens. Not meant to be used directly (although it will still work).
 #[doc(hidden)]
 #[macro_export]
 macro_rules! deserialize_parser {
-    // Macro built with Incremental TT munchers pattern : https://danielkeep.github.io/tlborm/book/pat-incremental-tt-munchers.html
+    ($buffer:expr, $bytes_read : ident, ($($name:ident),+ ) : $tok_type : ident) => {  // Simple
+        $(
+            $crate::deserialize_parser!(@PARSE $bytes_read, $buffer, $name => $tok_type);
+        )+
 
-    // Expression without tail with bytes_read
-    ($buffer:expr, $index:expr, $bytes_read:expr, ($name:ident $(,$extra:ident)*):$type:ident) => {
-        // Get value from buffer into expression
-        $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $name => $type);
-        // Get value from buffer into expression for extra
-        $( $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $extra => $type); )*
+
+    };
+    ($buffer:expr, $bytes_read : ident, [$($name:ident),+ ] : $tok_type : ident) => {  // Vector
+         $(
+            $crate::deserialize_parser!(@PARSE $bytes_read, $buffer, $name => [u32, $tok_type]);
+        )+
+    };
+    ($buffer:expr, $bytes_read : ident, [$len_type:ty : $($name:ident),+ ] : $tok_type : ident) => {  // Vector with length type
+         $(
+            $crate::deserialize_parser!(@PARSE $bytes_read, $buffer, $name => [$len_type:ty, $tok_type]);
+        )+
     };
 
-    // Expression with tail with bytes_read
-    ($buffer:expr, $index:expr, $bytes_read:expr, ($name:ident $(,$extra:ident)*):$type:ident, $($tail:tt)*) => {
-        // Get value from buffer into expression
-        $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $name => $type);
-        // Get value from buffer into expression for extra
-        $( $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $extra => $type); )*
-        // Parse tail
-        $crate::deserialize_parser!($buffer, $index, $bytes_read, $($tail)*);
-    };
-
-    // SLICE Without tail with bytes_read
-    ($buffer:expr, $index:expr, $bytes_read:expr, [$name:ident $(,$extra:ident)*]:$type:ident) => {
-        // Get value from buffer into array
-        $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $name => [$type]);
-        // Get value from buffer into array for extra
-        $( $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $extra => [$type]); )*
-    };
-
-    // SLICE With tail with bytes_read
-    ($buffer:expr, $index:expr, $bytes_read:expr, [$name:ident $(,$extra:ident)*]:$type:ident, $($tail:tt)*) => {
-        // Get value from buffer into array
-        $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $name => [$type]);
-        // Get value from buffer into array for extra
-        $( $crate::deserialize_retriever!($bytes_read, $buffer[$index + $bytes_read..$buffer.len()], $extra => [$type]); )*
-        // Parse tail
-        $crate::deserialize_parser!($buffer, $index, $bytes_read, $($tail)*);
-    };
-}
-
-/// Hidden extension of the to_buffer! macro. Retrieve value from buffer. Not meant to be used directly (although it will still work).
-#[doc(hidden)]
-#[macro_export]
-macro_rules! deserialize_retriever {
-
-
-    // Slice affectator
-    ($bytes_read:expr, $buffer:expr, $name:ident => [$type:ident]) => {
+    // Slice affectator with len type
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => [$len_type:ty, $type:ident]) => {
 
         // Keep bytes size of u32
-        let u32_bs = core::mem::size_of::<u32>();
+        let len_bs = size_of::<$len_type>();
 
         // Get size of slice
-        let slice_size = <u32>::from_le_bytes($buffer[0..u32_bs].try_into().expect("Incorrect length!"));
+        let slice_size = <$len_type>::from_le_bytes($buffer[0..len_bs].try_into().expect("Incorrect length!"));
 
         // Increase $bytes_read by u32 size
-        $bytes_read += u32_bs;
+        $bytes_read += len_bs;
 
         // Init vector
         let mut $name:Vec<$type> = Vec::new();
@@ -207,9 +129,8 @@ macro_rules! deserialize_retriever {
         // Retrieve each slice
         for i in 0..slice_size {
 
-            // Use index 0 because $buffer[].try_into() consume buffer length
-            $crate::deserialize_retriever!($bytes_read, $buffer, FB_TEMP_VARIABLE => $type);
-            $name.push(FB_TEMP_VARIABLE);   // Push temporary variable into vector
+            $crate::deserialize_parser!(@PARSE $bytes_read, $buffer, item_name => $type);
+            $name.push(item_name);   // Push temporary variable into vector
         }       
 
     };
@@ -218,7 +139,7 @@ macro_rules! deserialize_retriever {
     /**********
     * BOOLEAN *
     **********/
-    ($bytes_read:expr, $buffer:expr, $name:ident => bool) => {
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => bool) => {
         // Translate byte into u8
         let u8val = <u8>::from_le_bytes($buffer[0..core::mem::size_of::<u8>()].try_into().expect("Incorrect length!"));
 
@@ -237,79 +158,28 @@ macro_rules! deserialize_retriever {
     /***********
     * NUMERICS * 
     ***********/
-    ($bytes_read:expr, $buffer:expr, $name:ident => u8) => {
-        let $name = <u8>::from_le_bytes($buffer[0..core::mem::size_of::<u8>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<u8>();
+    (@NUM $bytes_read:expr, $buffer:expr, $name:ident, $type:ty) => {
+        let $name = <$type>::from_le_bytes($buffer[0..size_of::<$type>()].try_into().expect("Incorrect length!"));
+        $bytes_read += size_of::<$type>();
     };
 
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => u8) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, u8 ); };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => u16) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, u16 ); };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => u32) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, u32 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => u64) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, u64 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => u128) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, u128 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => f32) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, f32 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => f64) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, f64 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => i8) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, i8 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => i16) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, i16 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => i32) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, i32 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => i64) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, i64 ) };
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => i128) => { $crate::deserialize_parser! (@NUM $bytes_read, $buffer, $name, i128 ) };
 
-    ($bytes_read:expr, $buffer:expr, $name:ident => u16) => {
-        let $name = <u16>::from_le_bytes($buffer[0..core::mem::size_of::<u16>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<u16>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => u32) => { 
-        let $name = <u32>::from_le_bytes($buffer[0..core::mem::size_of::<u32>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<u32>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => u64) => {
-        let $name = <u64>::from_le_bytes($buffer[0..core::mem::size_of::<u64>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<u64>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => u128) => {
-        let $name = <u128>::from_le_bytes($buffer[0..core::mem::size_of::<u128>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<u128>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => f32) => {
-        let $name = <f32>::from_le_bytes($buffer[0..core::mem::size_of::<f32>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<f32>();
-    };
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => f64) => {
-        let $name = <f64>::from_le_bytes($buffer[0..core::mem::size_of::<f64>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<f64>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => i8) => {
-        let $name = <i8>::from_le_bytes($buffer[0..core::mem::size_of::<i8>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<i8>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => i16) => {
-        let $name = <i16>::from_le_bytes($buffer[0..core::mem::size_of::<i16>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<i16>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => i32) => {
-        let $name = <i32>::from_le_bytes($buffer[0..core::mem::size_of::<i32>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<i32>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => i64) => {
-        let $name = <i64>::from_le_bytes($buffer[0..core::mem::size_of::<i64>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<i64>();
-    };
-
-
-    ($bytes_read:expr, $buffer:expr, $name:ident => i128) => {
-        let $name = <i128>::from_le_bytes($buffer[0..core::mem::size_of::<i128>()].try_into().expect("Incorrect length!"));
-        $bytes_read += core::mem::size_of::<i128>();
-    };
     /*********
     * STRING * 
     *********/
-    ($bytes_read:expr, $buffer:expr, $name:ident => String) => {
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => String) => {
 
         // Keep bytes size of u32
         let u32_bs = core::mem::size_of::<u32>();
@@ -328,11 +198,9 @@ macro_rules! deserialize_retriever {
     /***************
     * TAMPON TRAIT * 
     ***************/
-    ($bytes_read:expr, $buffer:expr, $name:ident => $tampon:ident) => {
+    (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => $tampon:ident) => {
         let temp = $tampon::deserialize(&$buffer);
         let $name = temp.0;
         $bytes_read += temp.1;
     };
-
-
 }

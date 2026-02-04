@@ -1,30 +1,31 @@
-/*
- * @file tampon/tests/tampon.rs
- *
- * @module tampon::tests
- *
- * @brief Contains implementation of Tampon trait used for tests.
- * 
- * @details
- * Contains implementation of Tampon trait used for tests.
- *
- * @author Mathieu Grenier
- * @copyright NickelAnge.Studio
- *
- * @date 2022-07-02
- *
- * @version
- * 1.0 : 2022-07-02 | Mathieu Grenier | Code creation
- *
- * @ref
- * 
- * @todo
- */
+/* 
+Copyright (c) 2026  NickelAnge.Studio 
+Email               mathieu.grenier@nickelange.studio
+Git                 https://github.com/NickelAngeStudio/tampon
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+*/
 
 use std::vec;
 
 use tampon::deserialize;
-pub use tampon::{Tampon, bytes_size, serialize};
+pub use tampon::{Tampon, serialize_size, serialize};
 
 use crate::data::{do_vecs_match, do_vecs_eq_match};
 
@@ -60,13 +61,13 @@ use crate::data::{do_vecs_match, do_vecs_eq_match};
  }
 
 
-impl Tampon<TamponS1> for TamponS1 {
+impl Tampon for TamponS1 {
     fn bytes_size(&self) -> usize {
-        bytes_size!((self._f1):u8, (self._f2):u32, (self._f3):f64, (&self.f4):TamponS2, [self.v1]:u8, [self.v2]:f64, [self.v3]:TamponS2)
+        serialize_size!((self._f1):u8, (self._f2):u32, (self._f3):f64, (&self.f4):TamponS2, [self.v1]:u8, [self.v2]:f64, [self.v3]:TamponS2)
     }
 
     fn serialize(&self, buffer : &mut [u8]) -> usize {
-        serialize!(buffer, to_size, (self._f1):u8, (self._f2):u32, (self._f3):f64, (&self.f4):TamponS2, [&self.v1]:u8, [&self.v2]:f64, [&self.v3]:TamponS2);
+        serialize!(buffer, to_size, (self._f1):u8, (self._f2):u32, (self._f3):f64, (self.f4):TamponS2, [self.v1]:u8, [self.v2]:f64, [self.v3]:TamponS2);
         to_size
     }
 
@@ -103,9 +104,9 @@ impl PartialEq for TamponS1 {
     }
  }
 
- impl Tampon<TamponS2> for TamponS2 {
+ impl Tampon for TamponS2 {
     fn bytes_size(&self) -> usize {
-        bytes_size!((self._f1):u8, (self._f2):i128)
+        serialize_size!((self._f1):u8, (self._f2):i128)
     }
 
     fn serialize(&self, buffer : &mut [u8]) -> usize {
