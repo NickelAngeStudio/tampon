@@ -24,7 +24,7 @@ SOFTWARE.
 
 // boolean_pack_size! macro tests
 #[cfg(test)]
-mod serialize_size;
+mod bytes_size;
 
 // serialize!, deserialize! macros tests
 #[cfg(test)]

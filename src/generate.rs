@@ -163,7 +163,7 @@ pub(crate) mod buffer_generator_range {
 
 
 
-    /// Generate a Vec<u8> from the charset as a valid charset sample.
+    /// Generate a `Vec<u8>` from the charset as a valid charset sample.
     pub(crate) fn generate_charset_range(charset: u8) -> Vec<u8>{
 
         // Create 

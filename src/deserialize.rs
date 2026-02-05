@@ -32,7 +32,7 @@ SOFTWARE.
 /// # Usage
 /// `deserialize!(buffer, [bytes_read,] [0..n](v1, ..., vn):type, [0..n][optional_len_type :  s1, ..., sn]:type);`
 /// * `buffer` - Unmutable reference to [`slice`] of [`u8`] to copy bytes from.
-/// * `bytes_read` - (Optional) Identifier here can be used to get the count of bytes read from buffer.
+/// * bytes_read - (Optional) Identifier here can be used to get the count of bytes read from buffer.
 /// * One-to-many `(v1, ..., vn):type` where elements in `parenthesis()` are the variables to be read from buffer.
 /// * One-to-many `[optional_len_type : s1, ..., sn]:type` where elements in `brackets[]` are the slices to be read from buffer.
 ///     * `optional_len_type` u8, u16, u32 default, u64 or u128 for the size of bytes used to encode length. 
@@ -74,15 +74,14 @@ SOFTWARE.
 /// * [`Numeric types`](https://doc.rust-lang.org/reference/types/numeric.html) bytes are written as [`little endian`](https://en.wikipedia.org/wiki/Endianness).
 /// 
 /// # Panic(s)
-/// * Will panic! if `buffer` length is smaller than all target length combined.
+/// * Will panic! if `buffer` length is smaller than all target length combined. Use [`deserialize_size`](crate::deserialize_size) to prevent it.
 #[macro_export]
 macro_rules! deserialize {
-    ($buffer:expr, $($tokens:tt : $tokens_type:ident),+ ) => { // No optional parameter
-        let mut temp_bytes_read = 0;
-        $crate::deserialize!{ $buffer, temp_bytes_read, $( $tokens : $tokens_type ),+ };
+    ($buffer:expr, $( $tokens:tt : $tokens_type:ident ),+ ) => {    // Without optional parameter
+        $crate::deserialize!($buffer, tampon_bytes_read, $( $tokens : $tokens_type ),+);
     };
-    ($buffer:expr, $bytes_read : ident, $( $tokens:tt : $tokens_type:ident ),+ ) => { // With optional parameter
-        let mut $bytes_read = 0;
+    ($buffer:expr, $bytes_read : ident, $( $tokens:tt : $tokens_type:ident ),+ ) => {
+        let mut $bytes_read : usize = 0;
         $(
             $crate::deserialize_parser! ( $buffer[$bytes_read..], $bytes_read, $tokens : $tokens_type);
         )+
@@ -185,7 +184,7 @@ macro_rules! deserialize_parser {
         let u32_bs = core::mem::size_of::<u32>();
         
         // Get size of string to retrieve
-        let string_size = (<u32>::from_le_bytes($buffer[0..u32_bs].try_into().expect("Incorrect length!"))) as usize;
+        let string_size = (<u32>::from_le_bytes($buffer[0..u32_bs].try_into().unwrap())) as usize;
 
         // Use String::from_utf8 which is SAFE https://doc.rust-lang.org/std/string/struct.String.html#method.from_utf8
         let $name = String::from_utf8($buffer[u32_bs..u32_bs + string_size].to_vec()).expect("UTF8 String incorrect!"); 
@@ -199,8 +198,10 @@ macro_rules! deserialize_parser {
     * TAMPON TRAIT * 
     ***************/
     (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => $tampon:ident) => {
+
         let temp = $tampon::deserialize(&$buffer);
         let $name = temp.0;
         $bytes_read += temp.1;
+
     };
 }
