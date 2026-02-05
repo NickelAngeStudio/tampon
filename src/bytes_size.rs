@@ -22,13 +22,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// ##### Variadic macro used to get the size in [`bytes`](https://en.wikipedia.org/wiki/Byte) of [`compatible variables`](macro.serialize_size.html#compatible-variabless) to [`serialize`](https://en.wikipedia.org/wiki/Serialization).
+/// ##### Variadic macro used to get the size in [`bytes`](https://en.wikipedia.org/wiki/Byte) of [`compatible variables`](macro.bytes_size.html#compatible-variabless) to [`serialize`](https://en.wikipedia.org/wiki/Serialization).
 /// 
 /// Variadic macro used to get the size in [`bytes`](https://en.wikipedia.org/wiki/Byte) of [`bool`], [`Numeric types`](https://doc.rust-lang.org/reference/types/numeric.html) (except usize, isize), [`String`] and implementors of trait [`Tampon`](trait.Tampon.html).
 /// Also work with [`slice`] by using brackets `[]` instead of parenthesis `()`.
 ///
 /// # Usage
-/// `let size = serialize_size!([0..n](v1, ..., vn):type, [0..n][optional_len_type :  s1, ..., sn]:type);`
+/// `let size = bytes_size!([0..n](v1, ..., vn):type, [0..n][optional_len_type :  s1, ..., sn]:type);`
 /// * One-to-many `(v1, ..., vn):type` where elements in `parenthesis()` are the variables to be sized.
 /// * One-to-many `[s1, ..., sn]:type` where elements in `brackets[]` are the slices to be sized.
 ///     * `optional_len_type` u8, u16, u32 default, u64 or u128 for the size of bytes used to encode length. 
@@ -39,7 +39,7 @@ SOFTWARE.
 /// # Example(s)
 /// ```
 /// // Import macro
-/// use tampon::serialize_size;
+/// use tampon::bytes_size;
 /// 
 /// // Declare multiple variables
 /// let a:u8 = 55;
@@ -51,7 +51,7 @@ SOFTWARE.
 /// let g:Vec<f64> = vec![f64::MAX; 50];
 /// 
 /// // Get the size in bytes of all those elements in one macro call
-/// let size = serialize_size!((a,b):u8, (c):u32, (d):String, [e]:i32, [f,g]:f64);
+/// let size = bytes_size!((a,b):u8, (c):u32, (d):String, [e]:i32, [f,g]:f64);
 /// 
 /// // Print result
 /// println!("Bytes size of variables a,b,c,d,e,f,g is {}", size);
@@ -65,14 +65,14 @@ SOFTWARE.
 /// * [`slice`] of the above types
 /// 
 #[macro_export]
-macro_rules! serialize_size {
+macro_rules! bytes_size {
     // Return 0 on empty
     () => {{ 0 } as usize };
 
     ($( $tokens:tt : $tokens_type:ident ),+ ) => {{
 
         $(
-            $crate::serialize_size_parser! ($tokens : $tokens_type) +
+            $crate::bytes_size_parser! ($tokens : $tokens_type) +
         )+
         0
 
@@ -82,26 +82,26 @@ macro_rules! serialize_size {
 
 
 
-/// Hidden extension of the serialize_size! macro. Not meant to be used directly (although it will still work).
+/// Hidden extension of the bytes_size! macro. Not meant to be used directly (although it will still work).
 #[doc(hidden)]
 #[macro_export]
-macro_rules! serialize_size_parser {
+macro_rules! bytes_size_parser {
     (($($name:expr),+ ) : $tok_type : ident) => {{  // Simple
         $(
-            $crate::serialize_size_parser!(@PARSE $name => $tok_type) +
+            $crate::bytes_size_parser!(@PARSE $name => $tok_type) +
         )+
         0
     } as usize };
 
     ([$($name:expr),+ ] : $tok_type : ident) => {{ // Vector
          $(
-            $crate::serialize_size_parser!(@PARSE $name => [u32, $tok_type]) +
+            $crate::bytes_size_parser!(@PARSE $name => [u32, $tok_type]) +
         )+
         0
     } as usize };
     ([$len_type:ty : $($name:expr),+ ] : $tok_type : ident) => {{  // Vector with length type
          $(
-            $crate::serialize_size_parser!(@PARSE $name => [$len_type:ty, $tok_type]) +
+            $crate::bytes_size_parser!(@PARSE $name => [$len_type:ty, $tok_type]) +
         )+
         0
     } as usize };
@@ -116,10 +116,9 @@ macro_rules! serialize_size_parser {
         if $name.len() > 0 {
             let mut ret : usize = 0;
             for elem in $name.iter() {
-                ret += $crate::serialize_size_parser!(@PARSE *elem => $tok_type);
+                ret += $crate::bytes_size_parser!(@PARSE *elem => $tok_type);
             } 
             size_of::<$len_type>() + ret
-            //size_of::<$len_type>() +  $name.len() * $crate::serialize_size_parser!(@PARSE $name[0] => $tok_type)
         } else {
             size_of::<$len_type>()
         }
@@ -140,18 +139,18 @@ macro_rules! serialize_size_parser {
     ***********/
     (@NUM $name:expr, $type:ty) => {{ size_of::<$type>() } as usize };
 
-    (@PARSE $name:expr => u8) => {{ $crate::serialize_size_parser! (@NUM $name, u8 ) } as usize };
-    (@PARSE $name:expr => u16) => {{ $crate::serialize_size_parser! (@NUM $name, u16 ) } as usize };
-    (@PARSE $name:expr => u32) => {{ $crate::serialize_size_parser! (@NUM $name, u32 ) } as usize };
-    (@PARSE $name:expr => u64) => {{ $crate::serialize_size_parser! (@NUM $name, u64 ) } as usize };
-    (@PARSE $name:expr => u128) => {{ $crate::serialize_size_parser! (@NUM $name, u128 ) } as usize };
-    (@PARSE $name:expr => f32) => {{ $crate::serialize_size_parser! (@NUM $name, f32 ) } as usize };
-    (@PARSE $name:expr => f64) => {{ $crate::serialize_size_parser! (@NUM $name, f64 ) } as usize };
-    (@PARSE $name:expr => i8) => {{ $crate::serialize_size_parser! (@NUM $name, i8 ) } as usize };
-    (@PARSE $name:expr => i16) => {{ $crate::serialize_size_parser! (@NUM $name, i16 ) } as usize };
-    (@PARSE $name:expr => i32) => {{ $crate::serialize_size_parser! (@NUM $name, i32 ) } as usize };
-    (@PARSE $name:expr => i64) => {{ $crate::serialize_size_parser! (@NUM $name, i64 ) } as usize };
-    (@PARSE $name:expr => i128) => {{ $crate::serialize_size_parser! (@NUM $name, i128 ) } as usize };
+    (@PARSE $name:expr => u8) => {{ $crate::bytes_size_parser! (@NUM $name, u8 ) } as usize };
+    (@PARSE $name:expr => u16) => {{ $crate::bytes_size_parser! (@NUM $name, u16 ) } as usize };
+    (@PARSE $name:expr => u32) => {{ $crate::bytes_size_parser! (@NUM $name, u32 ) } as usize };
+    (@PARSE $name:expr => u64) => {{ $crate::bytes_size_parser! (@NUM $name, u64 ) } as usize };
+    (@PARSE $name:expr => u128) => {{ $crate::bytes_size_parser! (@NUM $name, u128 ) } as usize };
+    (@PARSE $name:expr => f32) => {{ $crate::bytes_size_parser! (@NUM $name, f32 ) } as usize };
+    (@PARSE $name:expr => f64) => {{ $crate::bytes_size_parser! (@NUM $name, f64 ) } as usize };
+    (@PARSE $name:expr => i8) => {{ $crate::bytes_size_parser! (@NUM $name, i8 ) } as usize };
+    (@PARSE $name:expr => i16) => {{ $crate::bytes_size_parser! (@NUM $name, i16 ) } as usize };
+    (@PARSE $name:expr => i32) => {{ $crate::bytes_size_parser! (@NUM $name, i32 ) } as usize };
+    (@PARSE $name:expr => i64) => {{ $crate::bytes_size_parser! (@NUM $name, i64 ) } as usize };
+    (@PARSE $name:expr => i128) => {{ $crate::bytes_size_parser! (@NUM $name, i128 ) } as usize };
 
     /*********
     * STRING * 

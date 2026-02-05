@@ -34,8 +34,8 @@ SOFTWARE.
 /// * `buffer` - Mutable reference to [`slice`] of [`u8`] to copy bytes into.
 /// * `bytes_copied` - (Optional) Identifier here can be used to get the count of bytes copied into buffer.
 /// * One-to-many `(v1, ..., vn):type` where elements in `parenthesis()` are the variables to be copied into buffer.
-/// * One-to-many `[s1, ..., sn]:type` where elements in `brackets[]` are the slices to be copied into buffer.
-///      * `optional_len_type` u8, u16, u32 default, u64 or u128 for the size of bytes used to encode length.
+/// * One-to-many `[optional_len_type : s1, ..., sn]:type` where elements in `brackets[]` are the slices to be copied into buffer.
+///      * `optional_len_type` u8, u16, u32 default, u64 or u128 for the size of bytes used to encode length. 
 /// 
 /// # Example(s)
 /// ```
@@ -67,12 +67,13 @@ SOFTWARE.
 /// // Print result
 /// println!("Bytes size of variables a,b,c,d,e,f is {}\nCopied size is {}\nResulted buffer={:?}", size, bytes_copied, buffer);
 /// ```
+/// 
 /// ##### Buffer smaller than content will cause a panic! :
-/// ``` should_panic
+/// ```should_panic
 /// // Import macro bytes_size and serialize
 /// use tampon::bytes_size;
 /// use tampon::serialize;
-/// 
+///  
 /// // Declare multiple variables (numerics don't need to be same type)
 /// let a:u8 = 55;
 /// let b:u8 = 255;
@@ -98,20 +99,22 @@ SOFTWARE.
 /// 
 /// # Endianness
 /// * [`Numeric types`](https://doc.rust-lang.org/reference/types/numeric.html) bytes are written as [`little endian`](https://en.wikipedia.org/wiki/Endianness).
-/// 
+///
 /// # Panic(s)
-/// * Will panic! if `buffer` length is smaller than all sources length combined.
+///
+/// Will panic! if buffer length is smaller than all sources length combined. Use [`bytes_size!`](crate::bytes_size) to validate buffer size.
+
+
 #[macro_export]
 macro_rules! serialize {
-    ($buffer:expr, $($tokens:tt : $tokens_type:ident),+ ) => { // No optional parameter
-        let mut temp_bytes_written = 0;
-        $crate::serialize!{ $buffer, temp_bytes_written, $( $tokens : $tokens_type ),+ };
+    ($buffer:expr, $( $tokens:tt : $tokens_type:ident ),+ ) => {    // Without optional parameter
+        $crate::serialize! ( $buffer, tampon_bytes_written, $($tokens : $tokens_type),+);        
     };
-    ($buffer:expr, $bytes_written : ident, $( $tokens:tt : $tokens_type:ident ),+ ) => { // With optional parameter
-        let mut $bytes_written = 0;
+    ($buffer:expr, $bytes_written:ident, $( $tokens:tt : $tokens_type:ident ),+ ) => {
+        let mut $bytes_written : usize = 0;   
         $(
             $crate::serialize_parser! ( $buffer[$bytes_written..], $bytes_written, $tokens : $tokens_type);
-        )+
+        )+        
     };
 }
 

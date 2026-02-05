@@ -72,9 +72,7 @@ macro_rules! buffer {
 
     ($( $tokens:tt : $tokens_type:ident ),+ ) => {{
         // Get size needed for variable serialization
-        let buffer_size = $crate::serialize_size!( $($tokens : $tokens_type),+);
-
-        println!("BFS={}", buffer_size);
+        let buffer_size = $crate::bytes_size!( $($tokens : $tokens_type),+);
 
         // Create mutable buffer of needed size
         let mut buffer:Vec<u8> = vec![0;buffer_size];

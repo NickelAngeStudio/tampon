@@ -24,8 +24,8 @@ SOFTWARE.
 
 use std::vec;
 
-use tampon::deserialize;
-pub use tampon::{Tampon, serialize_size, serialize};
+use tampon::{TamponError, deserialize, deserialize_size};
+pub use tampon::{Tampon, bytes_size, serialize};
 
 use crate::data::{do_vecs_match, do_vecs_eq_match};
 
@@ -63,22 +63,23 @@ use crate::data::{do_vecs_match, do_vecs_eq_match};
 
 impl Tampon for TamponS1 {
     fn bytes_size(&self) -> usize {
-        serialize_size!((self._f1):u8, (self._f2):u32, (self._f3):f64, (&self.f4):TamponS2, [self.v1]:u8, [self.v2]:f64, [self.v3]:TamponS2)
+        bytes_size!((self._f1):u8, (self._f2):u32, (self._f3):f64, (&self.f4):TamponS2, [self.v1]:u8, [self.v2]:f64, [self.v3]:TamponS2)
     }
 
     fn serialize(&self, buffer : &mut [u8]) -> usize {
-        serialize!(buffer, to_size, (self._f1):u8, (self._f2):u32, (self._f3):f64, (self.f4):TamponS2, [self.v1]:u8, [self.v2]:f64, [self.v3]:TamponS2);
-        to_size
+        serialize!(buffer, size, (self._f1):u8, (self._f2):u32, (self._f3):f64, (self.f4):TamponS2, [self.v1]:u8, [self.v2]:f64, [self.v3]:TamponS2);
+        size
     }
 
-    fn deserialize(buffer : &[u8]) -> (TamponS1, usize) {
-        
-        deserialize!(buffer, from_size, (_f1):u8, (_f2):u32, (_f3):f64, (f4):TamponS2, [v1]:u8, [v2]:f64, [v3]:TamponS2);
+    fn deserialize(buffer : &[u8]) -> (Self, usize) {
 
-        (TamponS1 {
-            _f1,_f2,_f3,f4,v1,v2,v3
-        }, from_size)
+        deserialize!(buffer, size, (_f1):u8, (_f2):u32, (_f3):f64, (f4):TamponS2, [v1]:u8, [v2]:f64, [v3]:TamponS2);
+        (TamponS1 { _f1,_f2,_f3,f4,v1,v2,v3 }, size)       
 
+    }
+    
+    fn deserialize_size(buffer : &[u8]) -> Result<usize, TamponError> {
+        deserialize_size!(buffer, (_f1):u8, (_f2):u32, (_f3):f64, (f4):TamponS2, [v1]:u8, [v2]:f64, [v3]:TamponS2)
     }
 }
 
@@ -106,22 +107,26 @@ impl PartialEq for TamponS1 {
 
  impl Tampon for TamponS2 {
     fn bytes_size(&self) -> usize {
-        serialize_size!((self._f1):u8, (self._f2):i128)
+        bytes_size!((self._f1):u8, (self._f2):i128)
     }
 
     fn serialize(&self, buffer : &mut [u8]) -> usize {
-        serialize!(buffer, to_size, (self._f1):u8, (self._f2):i128);
-        to_size
+        serialize!(buffer, size, (self._f1):u8, (self._f2):i128);
+        size
     }
 
-    fn deserialize(buffer : &[u8]) -> (TamponS2, usize) {
-        deserialize!(buffer, from_size, (_f1):u8, (_f2):i128);
+    fn deserialize(buffer : &[u8]) -> (Self, usize) {
+        deserialize!(buffer, size, (_f1):u8, (_f2):i128);
+        (TamponS2 {_f1,_f2 }, size)
+    }
+        
+    fn deserialize_size(buffer : &[u8]) -> Result<usize, TamponError> {
+        deserialize_size!(buffer, (_f1):u8, (_f2):i128)
+    }
 
-        (TamponS2 {
-            _f1,_f2
-        }, from_size)
-    }    
-}
+        
+}    
+
 
 impl PartialEq for TamponS2 {
     fn eq(&self, other: &Self) -> bool {
