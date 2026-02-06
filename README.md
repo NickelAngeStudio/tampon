@@ -1,5 +1,5 @@
 # tampon[^1]
-Specialized crate that contains [`SAFE`](https://doc.rust-lang.org/nomicon/meet-safe-and-unsafe.html) Rust [`functions`](https://doc.rust-lang.org/rust-by-example/fn.html), [`macros`](https://doc.rust-lang.org/rust-by-example/macros.html) and [`trait`](https://doc.rust-lang.org/rust-by-example/trait.html) to [`serialize / deserialize`](https://en.wikipedia.org/wiki/Serialization) data structure and/or object in [`bytes`](https://en.wikipedia.org/wiki/Byte).
+Specialized crate that contains [`SAFE`](https://doc.rust-lang.org/nomicon/meet-safe-and-unsafe.html) Rust [`functions`](https://doc.rust-lang.org/rust-by-example/fn.html), [`macros`](https://doc.rust-lang.org/rust-by-example/macros.html) and [`trait`](https://doc.rust-lang.org/rust-by-example/trait.html) to [`serialize / deserialize`](https://en.wikipedia.org/wiki/Serialization) data structure and/or object in packed [`bytes`](https://en.wikipedia.org/wiki/Byte).
 
 ### Version
 

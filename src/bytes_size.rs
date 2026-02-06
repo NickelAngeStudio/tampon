@@ -22,7 +22,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-/// ##### Variadic macro used to get the size in [`bytes`](https://en.wikipedia.org/wiki/Byte) of [`compatible variables`](macro.bytes_size.html#compatible-variabless) to [`serialize`](https://en.wikipedia.org/wiki/Serialization).
+/// ##### Variadic macro used to get the size in [`bytes`](https://en.wikipedia.org/wiki/Byte) of [`compatible variables`](macro.bytes_size.html#compatible-variabless).
 /// 
 /// Variadic macro used to get the size in [`bytes`](https://en.wikipedia.org/wiki/Byte) of [`bool`], [`Numeric types`](https://doc.rust-lang.org/reference/types/numeric.html) (except usize, isize), [`String`] and implementors of trait [`Tampon`](trait.Tampon.html).
 /// Also work with [`slice`] by using brackets `[]` instead of parenthesis `()`.

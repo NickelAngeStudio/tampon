@@ -25,7 +25,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
- /// # Re-export for Public API
+ // # Re-export for Public API
  #[doc(inline)]
  pub use generate::generate_buffer as generate_buffer;
  pub use generate::buffer_generator_charset as buffer_generator_charset;
