@@ -66,9 +66,6 @@ SOFTWARE.
 /// 
 #[macro_export]
 macro_rules! bytes_size {
-    // Return 0 on empty
-    () => {{ 0 } as usize };
-
     ($( $tokens:tt : $tokens_type:ident ),+ ) => {{
 
         $(
@@ -101,7 +98,7 @@ macro_rules! bytes_size_parser {
     } as usize };
     ([$len_type:ty : $($name:expr),+ ] : $tok_type : ident) => {{  // Vector with length type
          $(
-            $crate::bytes_size_parser!(@PARSE $name => [$len_type:ty, $tok_type]) +
+            $crate::bytes_size_parser!(@PARSE $name => [$len_type, $tok_type]) +
         )+
         0
     } as usize };

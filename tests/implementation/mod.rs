@@ -29,6 +29,7 @@ pub use tampon::{Tampon, bytes_size, serialize};
 
 use crate::data::{do_vecs_match, do_vecs_eq_match};
 
+
 // Struct used to test Tampon traits in macros
  pub struct TamponS1 {
     _f1:u8,

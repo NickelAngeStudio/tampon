@@ -63,15 +63,15 @@ SOFTWARE.
 macro_rules! deserialize_size {
     ($buffer:expr, $( $tokens:tt : $tokens_type:ident ),+ ) => {{
     
-        let mut is_incomplete : bool = false;
+        let mut is_complete : bool = true;
         let mut tampon_bytes_read = 0;
         $(
-            if !is_incomplete {
-                is_incomplete &= $crate::deserialize_size_parser! ( $buffer[tampon_bytes_read..], tampon_bytes_read, $tokens : $tokens_type)
+            if is_complete {
+                is_complete &= $crate::deserialize_size_parser! ( $buffer[tampon_bytes_read..], tampon_bytes_read, $tokens : $tokens_type)
             }
         )+
 
-        if !is_incomplete {
+        if is_complete {
             Ok(tampon_bytes_read)
         } else {
             Err($crate::TamponError::DeserializeSizeBufferIncomplete)
@@ -86,59 +86,59 @@ macro_rules! deserialize_size {
 #[macro_export]
 macro_rules! deserialize_size_parser {
     ($buffer:expr, $bytes_read : ident, ($($name:ident),+ ) : $tok_type : ident) => {{  // Simple
-        let mut is_incomplete : bool = false;
+        let mut is_complete : bool = true;
         $(
-            if !is_incomplete{
-                is_incomplete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, $name => $tok_type);
+            if is_complete{
+                is_complete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, $name => $tok_type);
             }
         )+
-        is_incomplete
+        is_complete
 
     } as bool };
     ($buffer:expr, $bytes_read : ident, [$($name:ident),+ ] : $tok_type : ident) => {{  // Vector
-        let mut is_incomplete : bool = false;
+        let mut is_complete : bool = true;
          $(
-            if !is_incomplete{
-                is_incomplete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, $name => [u32, $tok_type]);
+            if is_complete {
+                is_complete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, $name => [u32, $tok_type]);
             }
         )+
-        is_incomplete
+        is_complete
 
     } as bool };
     ($buffer:expr, $bytes_read : ident, [$len_type:ty : $($name:ident),+ ] : $tok_type : ident) => {{ // Vector with length type
-        let mut is_incomplete : bool = false;
+        let mut is_complete : bool = true;
         $(
-            if !is_incomplete{
-                is_incomplete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, $name => [$len_type:ty, $tok_type]);
+            if is_complete{
+                is_complete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, $name => [$len_type, $tok_type]);
             }
         )+
-        is_incomplete
+        is_complete
 
     } as bool };
 
     // Slice affectator with len type
     (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => [$len_type:ty, $type:ident]) => {{
 
-        let mut is_incomplete = false;
+        let mut is_complete = true;
 
         // Keep bytes size $len_type
         let len_bs = size_of::<$len_type>();
 
         if len_bs > $buffer.len() {
-            is_incomplete = true;
+            is_complete = false;
         } else {
             let slice_size = <$len_type>::from_le_bytes($buffer[0..len_bs].try_into().expect(""));
             $bytes_read += len_bs;
             
             // Retrieve each slice
             for i in 0..slice_size {
-                if !is_incomplete {
-                    is_incomplete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, item_name => $type);
+                if is_complete {
+                    is_complete &= $crate::deserialize_size_parser!(@PARSE $bytes_read, $buffer, item_name => $type);
                 }
             }       
         }
 
-        is_incomplete
+        is_complete
 
     } as bool };
 
@@ -147,8 +147,9 @@ macro_rules! deserialize_size_parser {
     * BOOLEAN *
     **********/
     (@PARSE $bytes_read:expr, $buffer:expr, $name:ident => bool) => {{
+        let ret = $buffer.len() >= size_of::<u8>();
         $bytes_read += 1;
-        size_of::<u8>() > $buffer.len()
+        ret
     } as bool };
 
 
@@ -156,8 +157,9 @@ macro_rules! deserialize_size_parser {
     * NUMERICS * 
     ***********/
     (@NUM $bytes_read:expr, $buffer:expr, $name:ident, $type:ty) => { {
+        let ret = $buffer.len() >= size_of::<$type>();
         $bytes_read += size_of::<$type>();
-        size_of::<$type>() > $buffer.len()       
+        ret
     } as bool };
 
 
@@ -183,12 +185,14 @@ macro_rules! deserialize_size_parser {
         let u32_bs = size_of::<u32>();
 
         if u32_bs > $buffer.len() {
-            true
+            false
         } else {
              // Get size of string to retrieve
             let string_size = <u32>::from_le_bytes($buffer[0..u32_bs].try_into().expect("")) as usize;
+            let ret = $buffer.len() >= string_size + u32_bs;
             $bytes_read += u32_bs + string_size;
-            string_size + u32_bs > $buffer.len()
+            ret
+            
         }     
 
     } as bool };
@@ -200,9 +204,9 @@ macro_rules! deserialize_size_parser {
         match $tampon::deserialize_size(&$buffer) {
             Ok(size) => {
                 $bytes_read += size;
-                false
+                true
             },
-            Err(err) => true
+            Err(err) => false
         }
         
     } as bool };

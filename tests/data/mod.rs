@@ -27,6 +27,9 @@ use crate::implementation::{ TamponS1, TamponS2 } ;
  // Size of slices
 static SLICESIZE: usize = 255;
 
+// Size of diff for optional_len_type
+pub const OLT_SIZE_DIFF : usize = size_of::<u8>() * 2 + size_of::<u16>() * 2 + size_of::<u32>() + size_of::<u64>() + size_of::<u128>() * 2 - size_of::<u32>() * 8;
+
 // String constants
 pub const STRINGS: &'static [&'static str] = &["I saw your text.", "Écrits avec des charactères spéciaux tel que é ç à î ì ï.",
     "",     // Empty string
