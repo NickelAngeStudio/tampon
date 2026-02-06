@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 /// Enumeration of possible errors with description.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum TamponError {
     /// Buffer used by [deserialize_size!](crate::deserialize_size) is missing parts and/or is corrupted.
     DeserializeSizeBufferIncomplete

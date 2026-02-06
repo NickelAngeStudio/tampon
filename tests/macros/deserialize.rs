@@ -25,6 +25,7 @@ SOFTWARE.
 
 use tampon::{serialize, deserialize};
 pub use tampon::Tampon;
+use crate::data::OLT_SIZE_DIFF;
 use crate::implementation::{ TamponS1, TamponS2 };
 
 use crate::tampon_slice;
@@ -744,4 +745,59 @@ fn serialize_deserialize_everythings(){
         && do_vecs_eq_match(&from_ts6, &to_ts6) && do_vecs_eq_match(&from_ts7, &to_ts7) && do_vecs_eq_match(&from_ts8, &to_ts8)
         && do_vecs_eq_match(&from_ts9, &to_ts9));
     println!("Value retrieved successfully!");
+}
+
+#[test]
+// Test serialize / deserialize optional size parameter
+fn deserialize_optional_size(){
+    // Create variables and get their size
+    let mut var_size = 0;
+    boolean_slice!(var_size, 0, to_bs0, to_bs1, to_bs2, to_bs3, to_bs4, to_bs5, to_bs6, to_bs7, to_bs8, to_bs9);
+
+    // Create buffer with serialize! and different len without to_size
+    let mut buffer:Vec<u8> = vec![0;var_size*2];
+    serialize!(buffer, [u8 : to_bs0,to_bs1]:bool, [u16 : to_bs2,to_bs3]:bool, [u32 : to_bs4]:bool, [u64 : to_bs5]:bool, [u128 : to_bs6,to_bs7]:bool, 
+        [to_bs8,to_bs9]:bool);
+
+     // Get back data with deserialize! without from_size
+    deserialize!(buffer, [u8 : from_bs0,from_bs1]:bool, [u16 : from_bs2,from_bs3]:bool, [u32 : from_bs4]:bool, [u64 : from_bs5]:bool, [u128 : from_bs6,from_bs7]:bool, 
+        [from_bs8,from_bs9]:bool);
+
+    // Compare results of serialize! VS deserialize!
+    assert!(do_vecs_match(&from_bs0, &to_bs0) && do_vecs_match(&from_bs1, &to_bs1) && do_vecs_match(&from_bs2, &to_bs2)
+    && do_vecs_match(&from_bs3, &to_bs3) && do_vecs_match(&from_bs4, &to_bs4) && do_vecs_match(&from_bs5, &to_bs5)
+    && do_vecs_match(&from_bs6, &to_bs6) && do_vecs_match(&from_bs7, &to_bs7) && do_vecs_match(&from_bs8, &to_bs8)
+    && do_vecs_match(&from_bs9, &to_bs9));
+
+}
+
+#[test]
+// Test deserialize optional_len_type for slices
+fn deserialize_optional_len_type(){
+    
+    // Create variables and get their size
+    let mut var_size = 0;
+    boolean_slice!(var_size, 0, to_bs0, to_bs1, to_bs2, to_bs3, to_bs4, to_bs5, to_bs6, to_bs7, to_bs8, to_bs9);
+
+    // Create buffer with serialize! and different len
+    let mut buffer:Vec<u8> = vec![0;var_size*2];
+    serialize!(buffer, to_size, [u8 : to_bs0,to_bs1]:bool, [u16 : to_bs2,to_bs3]:bool, [u32 : to_bs4]:bool, [u64 : to_bs5]:bool, [u128 : to_bs6,to_bs7]:bool, 
+        [to_bs8,to_bs9]:bool);
+
+
+    // Get back data with deserialize!
+    deserialize!(buffer, from_size,  [u8 : from_bs0,from_bs1]:bool, [u16 : from_bs2,from_bs3]:bool, [u32 : from_bs4]:bool, [u64 : from_bs5]:bool, [u128 : from_bs6,from_bs7]:bool, 
+        [from_bs8,from_bs9]:bool);
+
+    // All size should be the same
+    println!("SIZE | VAR={} | TO={} | FROM={} | DIFF={}", var_size, to_size, from_size, OLT_SIZE_DIFF);
+    assert!(var_size + OLT_SIZE_DIFF == to_size && to_size == from_size);
+
+    // Compare results of serialize! VS deserialize!
+    assert!(do_vecs_match(&from_bs0, &to_bs0) && do_vecs_match(&from_bs1, &to_bs1) && do_vecs_match(&from_bs2, &to_bs2)
+    && do_vecs_match(&from_bs3, &to_bs3) && do_vecs_match(&from_bs4, &to_bs4) && do_vecs_match(&from_bs5, &to_bs5)
+    && do_vecs_match(&from_bs6, &to_bs6) && do_vecs_match(&from_bs7, &to_bs7) && do_vecs_match(&from_bs8, &to_bs8)
+    && do_vecs_match(&from_bs9, &to_bs9));
+    println!("Value retrieved successfully!");
+
 }

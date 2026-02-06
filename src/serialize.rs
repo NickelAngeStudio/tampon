@@ -136,7 +136,7 @@ macro_rules! serialize_parser {
     };
     ($buffer:expr, $bytes_written : ident, [$len_type:ty : $($name:expr),+ ] : $tok_type : ident) => {  // Vector with length type
          $(
-            $crate::serialize_parser!(@PARSE $bytes_written, $buffer, $name => [$len_type:ty, $tok_type]);
+            $crate::serialize_parser!(@PARSE $bytes_written, $buffer, $name => [$len_type, $tok_type]);
         )+
     };
 

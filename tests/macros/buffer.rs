@@ -24,7 +24,7 @@ SOFTWARE.
 
 use tampon::{ Tampon, buffer, deserialize};
 
-use crate::{boolean_var, boolean_slice, data::{do_vecs_match, STRINGS, do_vecs_eq_match}, numeric_slice, string_var, string_slice, tampon_var, tampon_slice, numeric_var, implementation::{TamponS1, TamponS2}};
+use crate::{boolean_slice, boolean_var, data::{OLT_SIZE_DIFF, STRINGS, do_vecs_eq_match, do_vecs_match}, implementation::{TamponS1, TamponS2}, numeric_slice, numeric_var, string_slice, string_var, tampon_slice, tampon_var};
 
 #[test]
 // Test to > from buffer of 1 bool
@@ -693,4 +693,31 @@ fn buffer_everythings(){
         && do_vecs_eq_match(&from_ts6, &to_ts6) && do_vecs_eq_match(&from_ts7, &to_ts7) && do_vecs_eq_match(&from_ts8, &to_ts8)
         && do_vecs_eq_match(&from_ts9, &to_ts9));
     println!("Value retrieved successfully!");
+}
+
+#[test]
+// Test buffer optional_len_type for slices
+fn buffer_optional_len_type(){
+    
+    // Create variables and get their size
+    let mut var_size = 0;
+    boolean_slice!(var_size, 0, to_bs0, to_bs1, to_bs2, to_bs3, to_bs4, to_bs5, to_bs6, to_bs7, to_bs8, to_bs9);
+
+    let buffer= buffer!([u8 : to_bs0,to_bs1]:bool, [u16 : to_bs2,to_bs3]:bool, [u32 : to_bs4]:bool, [u64 : to_bs5]:bool, [u128 : to_bs6,to_bs7]:bool, 
+        [to_bs8,to_bs9]:bool);
+
+    // Get back data with deserialize!
+    deserialize!(buffer, from_size,  [u8 : from_bs0,from_bs1]:bool, [u16 : from_bs2,from_bs3]:bool, [u32 : from_bs4]:bool, [u64 : from_bs5]:bool, [u128 : from_bs6,from_bs7]:bool, 
+        [from_bs8,from_bs9]:bool);
+
+    // All size should be the same
+    println!("SIZE | VAR={} | TO={} | FROM={} | DIFF={}", var_size, buffer.len(), from_size, OLT_SIZE_DIFF);
+    assert!(var_size + OLT_SIZE_DIFF == buffer.len() && buffer.len() == from_size);
+
+    // Compare results of serialize! VS deserialize!
+    assert!(do_vecs_match(&from_bs0, &to_bs0) && do_vecs_match(&from_bs1, &to_bs1) && do_vecs_match(&from_bs2, &to_bs2)
+    && do_vecs_match(&from_bs3, &to_bs3) && do_vecs_match(&from_bs4, &to_bs4) && do_vecs_match(&from_bs5, &to_bs5)
+    && do_vecs_match(&from_bs6, &to_bs6) && do_vecs_match(&from_bs7, &to_bs7) && do_vecs_match(&from_bs8, &to_bs8)
+    && do_vecs_match(&from_bs9, &to_bs9));
+
 }

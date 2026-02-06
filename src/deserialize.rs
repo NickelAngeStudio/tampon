@@ -106,7 +106,7 @@ macro_rules! deserialize_parser {
     };
     ($buffer:expr, $bytes_read : ident, [$len_type:ty : $($name:ident),+ ] : $tok_type : ident) => {  // Vector with length type
          $(
-            $crate::deserialize_parser!(@PARSE $bytes_read, $buffer, $name => [$len_type:ty, $tok_type]);
+            $crate::deserialize_parser!(@PARSE $bytes_read, $buffer, $name => [$len_type, $tok_type]);
         )+
     };
 

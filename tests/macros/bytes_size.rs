@@ -23,7 +23,7 @@ SOFTWARE.
 */
 
 use tampon::{bytes_size, Tampon};
-use crate::{data::{ macro_test_validation, STRINGS}, implementation::TamponS1, implementation::TamponS2, numeric_var, numeric_slice, string_var, string_slice, boolean_var, boolean_slice, tampon_var, tampon_slice};
+use crate::{boolean_slice, boolean_var, data::{ OLT_SIZE_DIFF, STRINGS, macro_test_validation}, implementation::{TamponS1, TamponS2}, numeric_slice, numeric_var, string_slice, string_var, tampon_slice, tampon_var};
 
 #[test]
 // Test bytes size of 1 bool
@@ -322,7 +322,6 @@ fn bytes_size_2_tampon_slice(){
 // Test bytes size of 10 slice of implementor of Tampon trait
 fn bytes_size_10_tampon_slice(){
     
-
     let mut size = 0;
     tampon_slice!(size, 0, ts0:TamponS1, ts1:TamponS2, ts2:TamponS1, ts3:TamponS1, ts4:TamponS1, ts5:TamponS2, 
         ts6:TamponS1, ts7:TamponS2, ts8:TamponS1, ts9:TamponS2);
@@ -419,4 +418,18 @@ fn bytes_size_10n_10s_10t_10ns_10ss_10ts(){
             [ts0,ts2]:TamponS1,[ts1,ts5]:TamponS2, [ts3]:TamponS1, [ts4,ts6,ts8]:TamponS1, [ts7]:TamponS2 ,[ts9]:TamponS2
         )
     ));
+}
+
+#[test]
+// Test bytes_size optional_len_type for slices
+fn bytes_size_optional_len_type(){
+    
+    // Create variables and get their size
+    let mut var_size = 0;
+    boolean_slice!(var_size, 0, to_bs0, to_bs1, to_bs2, to_bs3, to_bs4, to_bs5, to_bs6, to_bs7, to_bs8, to_bs9);
+
+    let bs= bytes_size!([u8 : to_bs0,to_bs1]:bool, [u16 : to_bs2,to_bs3]:bool, [u32 : to_bs4]:bool, [u64 : to_bs5]:bool, [u128 : to_bs6,to_bs7]:bool, 
+        [to_bs8,to_bs9]:bool);
+
+    assert_eq!(var_size + OLT_SIZE_DIFF, bs);
 }

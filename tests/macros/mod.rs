@@ -30,6 +30,10 @@ mod bytes_size;
 #[cfg(test)]
 mod deserialize;
 
+// deserialize_size! macros tests
+#[cfg(test)]
+mod deserialize_size;
+
 // buffer! integration macro tests
 #[cfg(test)]
 mod buffer;
