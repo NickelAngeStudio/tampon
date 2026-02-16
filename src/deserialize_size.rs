@@ -87,6 +87,19 @@ macro_rules! deserialize_size {
         }
 
     } as Result<usize, $crate::TamponError>};
+
+    ($buffer:expr) => {{
+
+        Ok(0 as usize)
+
+    } as Result<usize, $crate::TamponError>};
+
+    ($buffer:expr, $max_size : expr) => {{
+
+        Ok(0 as usize)
+
+    } as Result<usize, $crate::TamponError>};
+
 }
 
 

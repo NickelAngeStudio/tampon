@@ -45,6 +45,7 @@ SOFTWARE.
 //! V17 : deserialize_size returns Ok(size) for size == optional max_size
 //! V18 : deserialize_size returns Ok(size) for size < optional max_size
 //! V19 : deserialize_size returns Ok(size) for optional max_size == 0
+//! V20 : deserialize_size returns Ok(0) for empty tokens
 
 use core::panic;
 use tampon::{Tampon, TamponError, serialize};
@@ -641,5 +642,28 @@ fn deserialize_size_zero_max() {
         Err(_) => panic!("deserialize_size! should returns Ok(size)!"),
     }
 
+
+}
+
+
+#[test]
+// V20 : deserialize_size returns Ok(0) for empty tokens
+fn deserialize_size_empty_tokens() {
+
+    let mut _bytes_size = 0;
+    numeric_slice!(_bytes_size, 0, ns0:u8, ns1:u16, ns2:u32, ns3:u64, ns4:u128, ns5:f32, ns6:f64,
+        ns7:i8, ns8:i16, ns9:i32, ns10:i64, ns11:i128);
+    let _buffer = buffer!([ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
+            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128);
+
+    match deserialize_size!(_buffer) {
+        Ok(size) => assert_eq!(size, 0),
+        Err(_) => panic!("V20 should not give an error!")
+    }
+
+    match deserialize_size!(_buffer, 48) {
+        Ok(size) => assert_eq!(size, 0),
+        Err(_) => panic!("V20 should not give an error!")
+    }
 
 }
