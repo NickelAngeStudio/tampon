@@ -86,6 +86,10 @@ macro_rules! deserialize {
             $crate::deserialize_parser! ( $buffer[$bytes_read..], $bytes_read, $tokens : $tokens_type);
         )+
     };
+    ($buffer:expr) => { };
+    ($buffer:expr, $bytes_read:ident ) => {
+        let $bytes_read = 0;
+    }
 }
 
 /// Hidden extension of the to_buffer! macro. Parse tokens. Not meant to be used directly (although it will still work).

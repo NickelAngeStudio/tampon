@@ -801,3 +801,24 @@ fn deserialize_optional_len_type(){
     println!("Value retrieved successfully!");
 
 }
+
+#[test]
+// Test deserialize without tokens
+fn deserialize_no_token(){
+
+    // Create variables and get their size
+    let mut var_size = 0;
+    boolean_slice!(var_size, 0, to_bs0, to_bs1, to_bs2, to_bs3, to_bs4, to_bs5, to_bs6, to_bs7, to_bs8, to_bs9);
+
+    // Create buffer with serialize! and different len without to_size
+    let mut buffer:Vec<u8> = vec![0;var_size*2];
+    serialize!(buffer, [u8 : to_bs0,to_bs1]:bool, [u16 : to_bs2,to_bs3]:bool, [u32 : to_bs4]:bool, [u64 : to_bs5]:bool, [u128 : to_bs6,to_bs7]:bool, 
+        [to_bs8,to_bs9]:bool);
+
+    deserialize!(buffer);
+    deserialize!(buffer, byte_size);
+
+    assert_eq!(byte_size, 0);
+        
+
+}
