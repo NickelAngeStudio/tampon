@@ -3,6 +3,9 @@ Specialized crate that contains [`SAFE`](https://doc.rust-lang.org/nomicon/meet-
 
 ### Version
 
+#### 1.1.1. 
+- Updated [`deserialize_size!(...)`] to include optional max_size to prevent exploit.
+
 #### 1.1.0. 
 - Refactored faster macro code.
 - Remove Tampon`<T>` from Trait implementation.

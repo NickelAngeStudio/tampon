@@ -87,13 +87,17 @@ pub trait Tampon {
     /// 
     /// Use macro [`deserialize_size!`](crate::deserialize_size) to easily return the size in bytes.
     /// 
+    /// # Parameters
+    /// * buffer : Buffer to read size from
+    /// * max_size : Maximum size possible. Use 0 for no limit.
+    /// 
     /// # Example(s)
     /// ```ignore
-    /// fn deserialize_size(&self) -> -> Result<usize, TamponError> {
-    ///     deserialize_size!((f1):u8, (f1):u32, (f3):f64, [v1]:u8, [v2]:f64)
+    /// fn deserialize_size(&self, buffer, max_size) -> -> Result<usize, TamponError> {
+    ///     deserialize_size!(buffer, max_size, (f1):u8, (f1):u32, (f3):f64, [v1]:u8, [v2]:f64)
     /// }
     /// ```
-    fn deserialize_size(buffer : &[u8]) -> Result<usize, crate::TamponError>;
+    fn deserialize_size(buffer : &[u8], max_size : usize) -> Result<usize, crate::TamponError>;
 
     /// Serialize object variable into buffer. 
     /// 
