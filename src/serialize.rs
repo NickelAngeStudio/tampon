@@ -116,6 +116,10 @@ macro_rules! serialize {
             $crate::serialize_parser! ( $buffer[$bytes_written..], $bytes_written, $tokens : $tokens_type);
         )+        
     };
+    ($buffer:expr) => { };
+    ($buffer:expr, $bytes_written:ident ) => {
+        let $bytes_written = 0;
+    }
 }
 
 /// Hidden extension of the serialize! macro. Not meant to be used directly (although it will still work).

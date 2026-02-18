@@ -75,6 +75,10 @@ macro_rules! bytes_size {
 
     } as usize};
 
+     () => {{
+        0 as usize
+    } as usize};
+
 }
 
 

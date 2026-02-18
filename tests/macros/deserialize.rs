@@ -822,3 +822,18 @@ fn deserialize_no_token(){
         
 
 }
+
+
+#[test]
+// Test serialize without tokens
+fn serialize_no_token(){
+
+    let mut _buffer:Vec<u8> = vec![0;0];
+    
+    serialize!(_buffer);
+    serialize!(_buffer, byte_size);
+
+    assert_eq!(byte_size, 0);
+
+
+}

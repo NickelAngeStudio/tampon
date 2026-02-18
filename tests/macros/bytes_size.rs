@@ -433,3 +433,9 @@ fn bytes_size_optional_len_type(){
 
     assert_eq!(var_size + OLT_SIZE_DIFF, bs);
 }
+
+#[test]
+// Test bytes_size without tokens
+fn bytes_size_no_tokens(){
+    assert_eq!(bytes_size!(), 0);
+}

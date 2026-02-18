@@ -3,6 +3,9 @@ Specialized crate that contains [`SAFE`](https://doc.rust-lang.org/nomicon/meet-
 
 ### Version
 
+#### 1.1.4.
+- All macros works without tokens.
+
 #### 1.1.3.  
 - Updated [`deserialize_size!(...)`] to include optional max_size to prevent exploit.
 - Updated [`deserialize_size!(...)`] and [`deserialize!(...)`] to accept no tokens.

@@ -721,3 +721,12 @@ fn buffer_optional_len_type(){
     && do_vecs_match(&from_bs9, &to_bs9));
 
 }
+
+
+#[test]
+// Without tokens
+fn buffer_without_tokens() {
+    let _buf = buffer!();
+
+    assert_eq!(_buf.len(), 0);
+}

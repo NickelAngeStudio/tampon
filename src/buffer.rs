@@ -85,4 +85,14 @@ macro_rules! buffer {
         buffer
 
     } as Vec<u8> };
+
+    () => {{
+        // Create mutable buffer of needed size
+        let mut buffer:Vec<u8> = vec![0;0];
+
+        // Return buffer
+        buffer
+
+    } as Vec<u8> };
+
 }
