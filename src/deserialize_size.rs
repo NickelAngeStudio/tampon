@@ -26,9 +26,8 @@ SOFTWARE.
 /// Variadic macro used to determine the buffer size in [`bytes`](https://en.wikipedia.org/wiki/Byte) needed to [`deserialize`](https://en.wikipedia.org/wiki/Serialization).
 /// 
 /// # Usage
-/// `let size = deserialize_size!(buffer, [max_size,] [0..n](v1, ..., vn):type, [0..n][optional_len_type :  s1, ..., sn]:type);`
+/// `let size = deserialize_size!(buffer, [0..n](v1, ..., vn):type, [0..n][optional_len_type :  s1, ..., sn]:type);`
 /// * `buffer` - Unmutable reference to [`slice`] of [`u8`] to determine size from.
-/// * max_size - (Optional) Maximum size for deserialize_size to prevent deserialize bomb or malformed binaries. Default : 0 = no limit.
 /// * One-to-many `(v1, ..., vn):type` where elements in `parenthesis()` are the variables to be sized.
 /// * One-to-many `[s1, ..., sn]:type` where elements in `brackets[]` are the slices to be sized.
 ///     * `optional_len_type` u8, u16, u32 default, u64 or u128 for the size of bytes used to encode length. 
@@ -36,8 +35,7 @@ SOFTWARE.
 /// # Return
 /// A `Result` which is 
 /// - `Ok` :  Size in bytes of all arguments as [`usize`].
-/// - `Err` : [`DeserializeSizeBufferIncomplete`](crate::TamponError::DeserializeSizeBufferIncomplete) if buffer is too small and/or corrupted.
-/// - `Err` : [`DeserializeSizeBufferIncomplete`](crate::TamponError::DeserializeSizeGreaterThanMax) if size is bigger than optional max_size.
+/// - `Err` : () if buffer is too small and/or corrupted.
 ///
 /// # Example(s)
 /// ```
@@ -65,40 +63,27 @@ SOFTWARE.
 macro_rules! deserialize_size {
 
     ($buffer:expr, $( $tokens:tt : $tokens_type:ident ),+ ) => {{
-
-        $crate::deserialize_size!($buffer, usize::MAX, $( $tokens : $tokens_type ),+)
-
-    } as Result<usize, $crate::TamponError>};
-
-    ($buffer:expr, $max_size : expr, $( $tokens:tt : $tokens_type:ident ),+ ) => {{
     
-        let mut deserialize_status : u8 = 0;    // 0 is okay, 1 is incomplete, 2 is size > max
+        let mut deserialize_status : u8 = 0;    // 0 is okay, 1 is incomplete
         let mut tampon_bytes_read = 0;
         $(
             if deserialize_status == 0 {
-                $crate::deserialize_size_parser! ( $buffer[tampon_bytes_read..], deserialize_status, $max_size, tampon_bytes_read, $tokens : $tokens_type);
+                $crate::deserialize_size_parser! ( $buffer[tampon_bytes_read..], deserialize_status, tampon_bytes_read, $tokens : $tokens_type);
             }
         )+
 
         match deserialize_status {
-            1 => Err($crate::TamponError::DeserializeSizeBufferIncomplete),
-            2 => Err($crate::TamponError::DeserializeSizeGreaterThanMax),
+            1 => Err(()),
             _ =>  Ok(tampon_bytes_read),
         }
 
-    } as Result<usize, $crate::TamponError>};
+    } as Result<usize, ()>};
 
     ($buffer:expr) => {{
 
         Ok(0 as usize)
 
-    } as Result<usize, $crate::TamponError>};
-
-    ($buffer:expr, $max_size : expr) => {{
-
-        Ok(0 as usize)
-
-    } as Result<usize, $crate::TamponError>};
+    } as Result<usize,()>};
 
 }
 
@@ -107,36 +92,36 @@ macro_rules! deserialize_size {
 #[doc(hidden)]
 #[macro_export]
 macro_rules! deserialize_size_parser {
-    ($buffer:expr, $deserialize_status: expr, $max_size : expr, $bytes_read : ident, ($($name:ident),+ ) : $tok_type : ident) => {  // Simple
+    ($buffer:expr, $deserialize_status: expr, $bytes_read : ident, ($($name:ident),+ ) : $tok_type : ident) => {  // Simple
         
         $(
             if $deserialize_status == 0 {
-                $crate::deserialize_size_parser!(@PARSE $deserialize_status, $max_size, $bytes_read, $buffer, $name => $tok_type);
+                $crate::deserialize_size_parser!(@PARSE $deserialize_status, $bytes_read, $buffer, $name => $tok_type);
             }
         )+
        
 
     };
 
-    ($buffer:expr,  $deserialize_status: expr, $max_size : expr, $bytes_read : ident, [$($name:ident),+ ] : $tok_type : ident) => {  // Vector
+    ($buffer:expr,  $deserialize_status: expr, $bytes_read : ident, [$($name:ident),+ ] : $tok_type : ident) => {  // Vector
          $(
             if $deserialize_status == 0 {
-                $crate::deserialize_size_parser!(@PARSE $deserialize_status, $max_size, $bytes_read, $buffer, $name => [u32, $tok_type]);
+                $crate::deserialize_size_parser!(@PARSE $deserialize_status, $bytes_read, $buffer, $name => [u32, $tok_type]);
             }
         )+
     };
 
-    ($buffer:expr, $deserialize_status : expr, $max_size : expr, $bytes_read : ident, [$len_type:ty : $($name:ident),+ ] : $tok_type : ident) => { // Vector with length type
+    ($buffer:expr, $deserialize_status : expr, $bytes_read : ident, [$len_type:ty : $($name:ident),+ ] : $tok_type : ident) => { // Vector with length type
         $(
             if $deserialize_status == 0 {
-                $crate::deserialize_size_parser!(@PARSE $deserialize_status, $max_size, $bytes_read, $buffer, $name => [$len_type, $tok_type]);
+                $crate::deserialize_size_parser!(@PARSE $deserialize_status, $bytes_read, $buffer, $name => [$len_type, $tok_type]);
             }
         )+
 
     };
 
     // Slice affectator with len type
-    (@PARSE $deserialize_status : expr, $max_size : expr,  $bytes_read:expr, $buffer:expr, $name:ident => [$len_type:ty, $type:ident]) => {
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => [$len_type:ty, $type:ident]) => {
 
 
         // Keep bytes size $len_type
@@ -147,15 +132,11 @@ macro_rules! deserialize_size_parser {
         } else {
             let slice_size = <$len_type>::from_le_bytes($buffer[0..len_bs].try_into().expect(""));
             $bytes_read += len_bs;
-
-            if $max_size > 0 && $bytes_read > $max_size {   // Test max size
-                $deserialize_status = 2;
-            } 
             
             // Retrieve each slice
             for i in 0..slice_size {
                 if $deserialize_status == 0 {
-                    $crate::deserialize_size_parser!(@PARSE  $deserialize_status, $max_size,  $bytes_read, $buffer, item_name => $type);
+                    $crate::deserialize_size_parser!(@PARSE  $deserialize_status, $bytes_read, $buffer, item_name => $type);
                 }
             }       
         }
@@ -167,14 +148,11 @@ macro_rules! deserialize_size_parser {
     /**********
     * BOOLEAN *
     **********/
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => bool) => {
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => bool) => {
         if $buffer.len() < size_of::<u8>() {
             $deserialize_status = 1;
         } else {
             $bytes_read += 1;
-            if $max_size > 0 && $bytes_read > $max_size {   // Test max size
-                $deserialize_status = 2;
-            } 
         }
     };
 
@@ -182,47 +160,44 @@ macro_rules! deserialize_size_parser {
     /***********
     * NUMERICS * 
     ***********/
-    (@NUM $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident, $type:ty) => {
+    (@NUM $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident, $type:ty) => {
         if $buffer.len() < size_of::<$type>() {
             $deserialize_status = 1;
         } else {
             $bytes_read += size_of::<$type>();
-            if $max_size > 0 && $bytes_read > $max_size {   // Test max size
-                $deserialize_status = 2;
-            } 
         }
     };
 
 
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => u8) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size, $bytes_read, $buffer, $name, u8 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => u16) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, u16 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => u32) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, u32 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => u64) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, u64 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => u128) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, u128 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => f32) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, f32 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => f64) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, f64 )};
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => i8) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, i8 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => i16) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, i16 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => i32) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, i32 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => i64) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, i64 ) };
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => i128) => 
-        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $max_size,  $bytes_read, $buffer, $name, i128 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => u8) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status, $bytes_read, $buffer, $name, u8 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => u16) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, u16 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => u32) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, u32 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => u64) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, u64 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => u128) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, u128 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => f32) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, f32 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => f64) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, f64 )};
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => i8) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, i8 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => i16) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, i16 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => i32) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, i32 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => i64) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, i64 ) };
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => i128) => 
+        { $crate::deserialize_size_parser! (@NUM $deserialize_status,  $bytes_read, $buffer, $name, i128 ) };
 
     /*********
     * STRING * 
     *********/
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => String) => {
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => String) => {
 
         // Keep bytes size of u32
         let u32_bs = size_of::<u32>();
@@ -236,9 +211,6 @@ macro_rules! deserialize_size_parser {
                 $deserialize_status = 1;
             } else {
                 $bytes_read += u32_bs + string_size;
-                if $max_size > 0 && $bytes_read > $max_size {   // Test max size
-                    $deserialize_status = 2;
-                } 
             }
         }     
 
@@ -247,20 +219,10 @@ macro_rules! deserialize_size_parser {
     /***************
     * TAMPON TRAIT * 
     ***************/
-    (@PARSE $deserialize_status : expr, $max_size : expr, $bytes_read:expr, $buffer:expr, $name:ident => $tampon:ident) => {
-        match $tampon::deserialize_size(&$buffer, $max_size - $bytes_read) {
-            Ok(size) => {
-                $bytes_read += size;
-                if $max_size > 0 && $bytes_read > $max_size {   // Test max size
-                    $deserialize_status = 2;
-                } 
-            },
-            Err(err) => match err {
-                $crate::TamponError::DeserializeSizeBufferIncomplete => $deserialize_status = 1,
-                $crate::TamponError::DeserializeSizeGreaterThanMax => $deserialize_status = 2,
-
-            }
+    (@PARSE $deserialize_status : expr, $bytes_read:expr, $buffer:expr, $name:ident => $tampon:ident) => {
+        match $tampon::deserialize_size(&$buffer) {
+            Ok(size) => $bytes_read += size,
+            Err(err) => $deserialize_status = 1,
         }
-        
     };
 }

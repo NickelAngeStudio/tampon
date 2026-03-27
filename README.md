@@ -3,6 +3,10 @@ Specialized crate that contains [`SAFE`](https://doc.rust-lang.org/nomicon/meet-
 
 ### Version
 
+#### 1.2.0
+- Removed optional max_size from [`deserialize_size!(...)`] since exploit not possible anymore.
+- Modified Trait to remove optional max size.
+
 #### 1.1.4.
 - All macros works without tokens.
 

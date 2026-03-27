@@ -32,7 +32,6 @@ SOFTWARE.
  pub use wipe::wipe_buffer as wipe_buffer;
  pub use compare::compare_buffers as compare_buffers;
  pub use crate::tampon::Tampon as Tampon;
- pub use error::TamponError as TamponError;
 
 /// Generate buffer
 #[doc(hidden)]
@@ -49,10 +48,6 @@ pub mod compare;
 /// Tampon trait
 #[doc(hidden)]
 pub mod tampon;
-
-/// errors
-#[doc(hidden)]
-pub mod error;
 
 /// bytes_size macro
 #[doc(hidden)]

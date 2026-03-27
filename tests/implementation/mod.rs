@@ -24,7 +24,7 @@ SOFTWARE.
 
 use std::vec;
 
-use tampon::{TamponError, deserialize, deserialize_size};
+use tampon::{ deserialize, deserialize_size};
 pub use tampon::{Tampon, bytes_size, serialize};
 
 use crate::data::{do_vecs_match, do_vecs_eq_match};
@@ -79,8 +79,8 @@ impl Tampon for TamponS1 {
 
     }
     
-    fn deserialize_size(buffer : &[u8], max_size : usize) -> Result<usize, TamponError> {
-        deserialize_size!(buffer, max_size, (_f1):u8, (_f2):u32, (_f3):f64, (f4):TamponS2, [v1]:u8, [v2]:f64, [v3]:TamponS2)
+    fn deserialize_size(buffer : &[u8]) -> Result<usize, ()> {
+        deserialize_size!(buffer, (_f1):u8, (_f2):u32, (_f3):f64, (f4):TamponS2, [v1]:u8, [v2]:f64, [v3]:TamponS2)
     }
 }
 
@@ -121,8 +121,8 @@ impl PartialEq for TamponS1 {
         (TamponS2 {_f1,_f2 }, size)
     }
         
-    fn deserialize_size(buffer : &[u8], max_size : usize) -> Result<usize, TamponError> {
-        deserialize_size!(buffer, max_size, (_f1):u8, (_f2):i128)
+    fn deserialize_size(buffer : &[u8]) -> Result<usize, ()> {
+        deserialize_size!(buffer, (_f1):u8, (_f2):i128)
     }
 
         

@@ -48,7 +48,7 @@ SOFTWARE.
 //! V20 : deserialize_size returns Ok(0) for empty tokens
 
 use core::panic;
-use tampon::{Tampon, TamponError, serialize};
+use tampon::{Tampon, serialize};
 
 use tampon::{buffer, deserialize_size};
 
@@ -248,7 +248,7 @@ fn deserialize_size_returns_err_bool() {
 
     match deserialize_size!(buffer[0..buffer.len()/2], (_b0, _b1, _b2, _b3, _b4, _b5, _b6, _b7, _b8, _b9):bool) {
         Ok(_) => panic!("Test deserialize_size_returns_err_bool should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 
     let mut _bytes_size = 0;
@@ -257,7 +257,7 @@ fn deserialize_size_returns_err_bool() {
 
     match deserialize_size!(buffer[0..buffer.len()-1], [bs0,bs1]:bool, [bs2]:bool, [bs3,bs4,bs5,bs6,bs7]:bool, [bs8,bs9]:bool) {
         Ok(_) => panic!("Test deserialize_size_returns_err_bool should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 
 }
@@ -273,7 +273,7 @@ fn deserialize_size_returns_err_numeric() {
     match deserialize_size!(buffer[0..buffer.len()/2], (n0):u8, (n1):u16, (n2):u32, (n3):u64, (n4):u128, (n5):f32, (n6):f64,
             (n7):i8, (n8):i16, (n9):i32, (n10):i64, (n11):i128) {
         Ok(_) => panic!("Test deserialize_size_returns_err_numeric should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 
     let mut _bytes_size = 0;
@@ -285,7 +285,7 @@ fn deserialize_size_returns_err_numeric() {
     match deserialize_size!(buffer[0..buffer.len()-1], [ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
             [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128) {
         Ok(_) => panic!("Test deserialize_size_returns_err_numeric should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 }
 
@@ -298,7 +298,7 @@ fn deserialize_size_returns_err_string() {
 
     match deserialize_size!(buffer[0..buffer.len()/2], (s0,s1):String, (s2,s3,s4):String, (s5):String, (s6,s7,s8,s9):String) {
         Ok(_) => panic!("Test deserialize_size_returns_err_string should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 
     let mut _bytes_size = 0;
@@ -307,7 +307,7 @@ fn deserialize_size_returns_err_string() {
 
     match deserialize_size!(buffer[0..buffer.len()-1], [ss0,ss1]:String, [ss2,ss3,ss4]:String, [ss5]:String, [ss6,ss7,ss8,ss9]:String) {
         Ok(_) => panic!("Test deserialize_size_returns_err_string should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 }
 
@@ -321,7 +321,7 @@ fn deserialize_size_returns_err_tampon() {
 
     match deserialize_size!(buffer[0..buffer.len()/2], (t0,t2):TamponS1,(t1,t5):TamponS2, (t3):TamponS1, (t4,t6,t8):TamponS1, (t7):TamponS2 ,(t9):TamponS2) {
         Ok(_) => panic!("Test deserialize_size_returns_err_tampon should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 
     let mut _bytes_size = 0;
@@ -332,7 +332,7 @@ fn deserialize_size_returns_err_tampon() {
 
     match deserialize_size!(buffer[0..buffer.len()-1], [ts0,ts2]:TamponS1,[ts1,ts5]:TamponS2, [ts3]:TamponS1, [ts4,ts6,ts8]:TamponS1, [ts7]:TamponS2 ,[ts9]:TamponS2) {
         Ok(_) => panic!("Test deserialize_size_returns_err_tampon should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
     }
 }
 
@@ -390,259 +390,8 @@ fn deserialize_size_returns_err_tampon() {
         (_b3, _b4, _b5, _b6, _b7, _b8, _b9):bool,
         (n0):u8, (n1):u16, (n2):u32, (n3):u64, (n4):u128) {
             Ok(_) => panic!("Test deserialize_size_returns_err_mixed should return err!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeBufferIncomplete),
+        Err(_) => {},
         }
-}
-
-
-#[test]
-// V12 : deserialize_size returns Err(DeserializeSizeGreaterThanMax) for size > optional max_size
- fn deserialize_size_returns_err_greater_max_bool() {
-
-    let mut _bytes_size = 0;
-    boolean_var!(_bytes_size, _b0, _b1, _b2, _b3, _b4, _b5, _b6, _b7, _b8, _b9);
-    let buffer = buffer!((_b0, _b1, _b2, _b3, _b4, _b5, _b6, _b7, _b8, _b9):bool);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-    match deserialize_size!(buffer, _bytes_size, (_b0, _b1, _b2, _b3, _b4, _b5, _b6, _b7, _b8, _b9):bool) {
-        Ok(_) => panic!("0. deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-
-    let mut _bytes_size = 0;
-    boolean_slice!(_bytes_size, 0, bs0, bs1, bs2, bs3, bs4, bs5, bs6, bs7, bs8, bs9);
-    let buffer = buffer!([bs0,bs1]:bool, [bs2]:bool, [bs3,bs4,bs5,bs6,bs7]:bool, [bs8,bs9]:bool);
-
-    // Reduce _bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-    match deserialize_size!(buffer, _bytes_size, [bs0,bs1]:bool, [bs2]:bool, [bs3,bs4,bs5,bs6,bs7]:bool, [bs8,bs9]:bool) {
-        Ok(_) => panic!("1. deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-
- }
-
- #[test]
-// V13 : deserialize_size returns Err(DeserializeSizeGreaterThanMax) for size > optional max_size for numeric
-fn deserialize_size_returns_err_greater_max_numeric() {
-    
-     let mut _bytes_size = 0;
-    numeric_var!(_bytes_size, n0:u8, n1:u16, n2:u32, n3:u64, n4:u128, n5:f32, n6:f64, n7:i8, n8:i16, n9:i32, n10:i64, n11:i128);
-    let buffer = buffer!((n0):u8, (n1):u16, (n2):u32, (n3):u64, (n4):u128, (n5):f32, (n6):f64,
-            (n7):i8, (n8):i16, (n9):i32, (n10):i64, (n11):i128);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-    match deserialize_size!(buffer, _bytes_size, (n0):u8, (n1):u16, (n2):u32, (n3):u64, (n4):u128, (n5):f32, (n6):f64,
-            (n7):i8, (n8):i16, (n9):i32, (n10):i64, (n11):i128) {
-        Ok(_) => panic!("deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-
-    let mut _bytes_size = 0;
-    numeric_slice!(_bytes_size, 0, ns0:u8, ns1:u16, ns2:u32, ns3:u64, ns4:u128, ns5:f32, ns6:f64,
-        ns7:i8, ns8:i16, ns9:i32, ns10:i64, ns11:i128);
-    let buffer = buffer!([ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-    match deserialize_size!(buffer, _bytes_size, [ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128) {
-        Ok(_) => panic!("deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-     
-}
-
-#[test]
-// V14 : deserialize_size returns Err(DeserializeSizeGreaterThanMax) for size > optional max_size for string
-fn deserialize_size_returns_err_greater_max_string() {
-    
-    let mut _bytes_size = 0;
-    string_var!(_bytes_size, STRINGS, 0, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
-    let buffer = buffer!((s0,s1):String, (s2,s3,s4):String, (s5):String, (s6,s7,s8,s9):String);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-    match deserialize_size!(buffer, _bytes_size, (s0,s1):String, (s2,s3,s4):String, (s5):String, (s6,s7,s8,s9):String) {
-        Ok(_) => panic!("deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-
-    let mut _bytes_size = 0;
-    string_slice!(_bytes_size, STRINGS, 0, ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8, ss9);
-    let buffer = buffer!([ss0,ss1]:String, [ss2,ss3,ss4]:String, [ss5]:String, [ss6,ss7,ss8,ss9]:String);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-
-    match deserialize_size!(buffer, _bytes_size, [ss0,ss1]:String, [ss2,ss3,ss4]:String, [ss5]:String, [ss6,ss7,ss8,ss9]:String) {
-        Ok(_) => panic!("deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-    
-}
-
-
-#[test]
-// V15 : deserialize_size returns Err(DeserializeSizeGreaterThanMax) for size > optional max_size for tampon
-fn deserialize_size_returns_err_greater_max_tampon() {
-    
-    let mut _bytes_size = 0;
-    tampon_var!(_bytes_size, t0:TamponS1, t1:TamponS2, t2:TamponS1, t3:TamponS1, t4:TamponS1, t5:TamponS2, 
-        t6:TamponS1, t7:TamponS2, t8:TamponS1, t9:TamponS2);
-    let buffer = buffer!((t0,t2):TamponS1,(t1,t5):TamponS2, (t3):TamponS1, (t4,t6,t8):TamponS1, (t7):TamponS2 ,(t9):TamponS2);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-
-    match deserialize_size!(buffer, _bytes_size, (t0,t2):TamponS1,(t1,t5):TamponS2, (t3):TamponS1, (t4,t6,t8):TamponS1, (t7):TamponS2 ,(t9):TamponS2) {
-        Ok(_) => panic!("deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-
-    let mut _bytes_size = 0;
-    tampon_slice!(_bytes_size, 0, ts0:TamponS1, ts1:TamponS2, ts2:TamponS1, ts3:TamponS1, ts4:TamponS1, ts5:TamponS2, 
-        ts6:TamponS1, ts7:TamponS2, ts8:TamponS1, ts9:TamponS2);
-
-    let buffer = buffer!([ts0,ts2]:TamponS1,[ts1,ts5]:TamponS2, [ts3]:TamponS1, [ts4,ts6,ts8]:TamponS1, [ts7]:TamponS2 ,[ts9]:TamponS2);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-    match deserialize_size!(buffer, _bytes_size, [ts0,ts2]:TamponS1,[ts1,ts5]:TamponS2, [ts3]:TamponS1, [ts4,ts6,ts8]:TamponS1, [ts7]:TamponS2 ,[ts9]:TamponS2) {
-        Ok(_) => panic!("deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-    
-}
-
-#[test]
-// V16 : deserialize_size returns Err(DeserializeSizeGreaterThanMax) for size > optional max_size for all types
-fn deserialize_size_returns_err_greater_max_mixed() {
-    
-    let mut _bytes_size = 0;
-    boolean_var!(_bytes_size, _b0, _b1, _b2, _b3, _b4, _b5, _b6, _b7, _b8, _b9);
-    boolean_slice!(_bytes_size, 0, bs0, bs1, bs2, bs3, bs4, bs5, bs6, bs7, bs8, bs9);
-    numeric_var!(_bytes_size, n0:u8, n1:u16, n2:u32, n3:u64, n4:u128, n5:f32, n6:f64, n7:i8, n8:i16, n9:i32, n10:i64, n11:i128);
-    numeric_slice!(_bytes_size, 0, ns0:u8, ns1:u16, ns2:u32, ns3:u64, ns4:u128, ns5:f32, ns6:f64,
-        ns7:i8, ns8:i16, ns9:i32, ns10:i64, ns11:i128);
-    string_var!(_bytes_size, STRINGS, 0, s0, s1, s2, s3, s4, s5, s6, s7, s8, s9);
-    string_slice!(_bytes_size, STRINGS, 0, ss0, ss1, ss2, ss3, ss4, ss5, ss6, ss7, ss8, ss9);
-    tampon_var!(_bytes_size, t0:TamponS1, t1:TamponS2, t2:TamponS1, t3:TamponS1, t4:TamponS1, t5:TamponS2, 
-        t6:TamponS1, t7:TamponS2, t8:TamponS1, t9:TamponS2);
-    tampon_slice!(_bytes_size, 0, ts0:TamponS1, ts1:TamponS2, ts2:TamponS1, ts3:TamponS1, ts4:TamponS1, ts5:TamponS2, 
-        ts6:TamponS1, ts7:TamponS2, ts8:TamponS1, ts9:TamponS2);
-    let buffer = buffer!(
-        (_b0, _b1, _b2):bool, 
-        [ts0,ts2]:TamponS1,[ts1,ts5]:TamponS2, [ts3]:TamponS1,
-        [ss0,ss1]:String, [ss2,ss3,ss4]:String,
-        (n7):i8, (n8):i16, (n9):i32, (n10):i64, (n11):i128,
-        [bs3,bs4,bs5,bs6,bs7]:bool, [bs8,bs9]:bool,
-        [ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-        (s0,s1):String, (s2,s3,s4):String, (s5):String,
-        (t0,t2):TamponS1,(t1,t5):TamponS2, (t3):TamponS1,
-        [bs0,bs1]:bool, [bs2]:bool,
-        [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128,
-        (t4,t6,t8):TamponS1, (t7):TamponS2 ,(t9):TamponS2,
-        [ss5]:String, [ss6,ss7,ss8,ss9]:String,
-        (n5):f32, (n6):f64,
-        (s6,s7,s8,s9):String,
-        [ts4,ts6,ts8]:TamponS1, [ts7]:TamponS2 ,[ts9]:TamponS2,
-        (_b3, _b4, _b5, _b6, _b7, _b8, _b9):bool,
-        (n0):u8, (n1):u16, (n2):u32, (n3):u64, (n4):u128);
-
-    // Reduce bytes_size by 1 to make max lower than size
-    _bytes_size -= 1;
-
-    match deserialize_size!(buffer, _bytes_size, 
-        (_b0, _b1, _b2):bool, 
-        [ts0,ts2]:TamponS1,[ts1,ts5]:TamponS2, [ts3]:TamponS1,
-        [ss0,ss1]:String, [ss2,ss3,ss4]:String,
-        (n7):i8, (n8):i16, (n9):i32, (n10):i64, (n11):i128,
-        [bs3,bs4,bs5,bs6,bs7]:bool, [bs8,bs9]:bool,
-        [ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-        (s0,s1):String, (s2,s3,s4):String, (s5):String,
-        (t0,t2):TamponS1,(t1,t5):TamponS2, (t3):TamponS1,
-        [bs0,bs1]:bool, [bs2]:bool,
-        [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128,
-        (t4,t6,t8):TamponS1, (t7):TamponS2 ,(t9):TamponS2,
-        [ss5]:String, [ss6,ss7,ss8,ss9]:String,
-        (n5):f32, (n6):f64,
-        (s6,s7,s8,s9):String,
-        [ts4,ts6,ts8]:TamponS1, [ts7]:TamponS2 ,[ts9]:TamponS2,
-        (_b3, _b4, _b5, _b6, _b7, _b8, _b9):bool,
-        (n0):u8, (n1):u16, (n2):u32, (n3):u64, (n4):u128) {
-        Ok(_) => panic!("deserialize_size! should returns Err(DeserializeSizeGreaterThanMax)!"),
-        Err(err) => assert_eq!(err, TamponError::DeserializeSizeGreaterThanMax),
-    }
-     
-}
-
-#[test]
-// V17 : deserialize_size returns Ok(size) for size == optional max_size
- fn deserialize_size_equal_max() {
-    let mut _bytes_size = 0;
-    numeric_slice!(_bytes_size, 0, ns0:u8, ns1:u16, ns2:u32, ns3:u64, ns4:u128, ns5:f32, ns6:f64,
-        ns7:i8, ns8:i16, ns9:i32, ns10:i64, ns11:i128);
-    let buffer = buffer!([ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128);
-
-    match deserialize_size!(buffer, _bytes_size, [ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128) {
-        Ok(size) => assert!(size == _bytes_size),
-        Err(_) => panic!("deserialize_size! should returns Ok(size)!"),
-    }
- }
-
-#[test]
-// V18 : deserialize_size returns Ok(size) for size < optional max_size
- fn deserialize_size_less_than_max() {
-
-    let mut _bytes_size = 0;
-    numeric_slice!(_bytes_size, 0, ns0:u8, ns1:u16, ns2:u32, ns3:u64, ns4:u128, ns5:f32, ns6:f64,
-        ns7:i8, ns8:i16, ns9:i32, ns10:i64, ns11:i128);
-    let buffer = buffer!([ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128);
-
-    // Increase bytes_size by 1 to make bigger than size
-    _bytes_size += 1;
-
-    match deserialize_size!(buffer, _bytes_size, [ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128) {
-        Ok(size) => assert!(size < _bytes_size),
-        Err(_) => panic!("deserialize_size! should returns Ok(size)!"),
-    }
-
- }
-
- #[test]
- // V19 : deserialize_size returns Ok(size) for optional max_size == 0
-fn deserialize_size_zero_max() {
-
-
-    let mut _bytes_size = 0;
-    numeric_slice!(_bytes_size, 0, ns0:u8, ns1:u16, ns2:u32, ns3:u64, ns4:u128, ns5:f32, ns6:f64,
-        ns7:i8, ns8:i16, ns9:i32, ns10:i64, ns11:i128);
-    let buffer = buffer!([ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128);
-
-    match deserialize_size!(buffer, 0, [ns0]:u8, [ns1]:u16, [ns2]:u32, [ns3]:u64, [ns4]:u128, [ns5]:f32, [ns6]:f64,
-            [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128) {
-        Ok(size) => assert!(size == _bytes_size),
-        Err(_) => panic!("deserialize_size! should returns Ok(size)!"),
-    }
-
-
 }
 
 
@@ -657,11 +406,6 @@ fn deserialize_size_empty_tokens() {
             [ns7]:i8, [ns8]:i16, [ns9]:i32, [ns10]:i64, [ns11]:i128);
 
     match deserialize_size!(_buffer) {
-        Ok(size) => assert_eq!(size, 0),
-        Err(_) => panic!("V20 should not give an error!")
-    }
-
-    match deserialize_size!(_buffer, 48) {
         Ok(size) => assert_eq!(size, 0),
         Err(_) => panic!("V20 should not give an error!")
     }
